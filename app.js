@@ -17,6 +17,7 @@ http.createServer(app).listen(config.get("port"), function() {
 });
 
 // view engine setup
+app.engine('ejs', require('ejs-locals')); // layout partial block
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
