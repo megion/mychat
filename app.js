@@ -6,7 +6,9 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var errorhandler = require('errorhandler');
+var session = require('express-session');
 var config = require('config');
+var mongoose = require('lib/mongoose');
 var log = require('lib/log')(module);
 var HttpError = require('error').HttpError;
 
@@ -34,11 +36,30 @@ app.use(favicon());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded());
 app.use(cookieParser());
+
+var MongoStore = require('connect-mongo')(session);
+
+app.use(session({
+	secret : config.get('session:secret'), // ABCDE242342342314123421.SHA256
+	saveUninitialized: true,
+    resave: true,
+	key : config.get('session:key'),
+	cookie : config.get('session:cookie'),
+	store : new MongoStore({
+		mongoose_connection : mongoose.connection
+	})
+}));
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(require('middleware/sendHttpError'));
 
-app.use('/', routes);
-app.use('/users', users);
+//app.use('/', routes);
+//app.use('/users', users);
+
+app.use(function(req, res, next) {
+	req.session.numberOfVisits = req.session.numberOfVisits + 1 || 1;
+	res.send("Visits: " + req.session.numberOfVisits);
+});
 
 app.use(function(err, req, res, next) {
 	if (typeof err == 'number') { // next(404);
