@@ -56,10 +56,10 @@ app.use(require('middleware/sendHttpError'));
 //app.use('/', routes);
 //app.use('/users', users);
 
-app.use(function(req, res, next) {
-	req.session.numberOfVisits = req.session.numberOfVisits + 1 || 1;
-	res.send("Visits: " + req.session.numberOfVisits);
-});
+//app.use(function(req, res, next) {
+	//req.session.numberOfVisits = req.session.numberOfVisits + 1 || 1;
+	//res.send("Visits: " + req.session.numberOfVisits);
+//});
 
 app.use(function(err, req, res, next) {
 	if (typeof err == 'number') { // next(404);
