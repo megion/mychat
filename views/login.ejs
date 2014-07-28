@@ -31,14 +31,14 @@
     var form = $(this);
 
     $('.error', form).html('');
-    $(":submit", form).button("loading");
+    //$(":submit", form).button("loading");
 
     $.ajax({
       url: "/login",
       method: "POST",
       data: form.serialize(),
       complete: function() {
-        $(":submit", form).button("reset");
+        //$(":submit", form).button("reset");
       },
       statusCode: {
         200: function() {

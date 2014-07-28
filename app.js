@@ -12,8 +12,12 @@ var mongoose = require('lib/mongoose');
 var log = require('lib/log')(module);
 var HttpError = require('error').HttpError;
 
-var routes = require('./routes/index');
-var users = require('./routes/users');
+//var routes = require('./routes/index');
+//var users = require('./routes/users');
+var chat = require('./routes/chat');
+var frontpage = require('./routes/frontpage');
+var login = require('./routes/login');
+var logout = require('./routes/logout');
 
 var app = express();
 http.createServer(app).listen(config.get("port"), function() {
@@ -52,9 +56,13 @@ app.use(session({
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(require('middleware/sendHttpError'));
+app.use(require('middleware/loadUser'));
 
 //app.use('/', routes);
-//app.use('/users', users);
+app.use('/', frontpage);
+app.use('/chat', chat);
+app.use('/login', login);
+app.use('/logout', logout);
 
 //app.use(function(req, res, next) {
 	//req.session.numberOfVisits = req.session.numberOfVisits + 1 || 1;
