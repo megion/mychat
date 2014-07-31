@@ -23,6 +23,7 @@ function dropDatabase(callback) {
 
 function requireModels(callback) {
   require('models/user');
+  require('models/page');
 
   async.each(Object.keys(mongoose.models), function(modelName, callback) {
     mongoose.models[modelName].ensureIndexes(callback);
@@ -44,4 +45,8 @@ function createUsers(callback) {
     	callback(err);
     });
   }, callback);
+}
+
+function createPages(callback) {
+	
 }
