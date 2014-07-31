@@ -11,9 +11,10 @@ var config = require('config');
 var mongoose = require('lib/mongoose');
 var log = require('lib/log')(module);
 var HttpError = require('error').HttpError;
+var userService = require('service/userService');
 
 //var routes = require('./routes/index');
-//var users = require('./routes/users');
+var users = require('./routes/users');
 var chat = require('./routes/chat');
 var frontpage = require('./routes/frontpage');
 var login = require('./routes/login');
@@ -63,6 +64,7 @@ app.use('/', frontpage);
 app.use('/chat', chat);
 app.use('/login', login);
 app.use('/logout', logout);
+app.use('/users', users);
 
 //app.use(function(req, res, next) {
 	//req.session.numberOfVisits = req.session.numberOfVisits + 1 || 1;
@@ -75,9 +77,9 @@ app.use(function(err, req, res, next) {
 	}
 
 	if (err instanceof HttpError) {
+		log.error(err); //
 		res.sendHttpError(err);
 	} else {
-		
 		if (app.get('env') == 'development') {
 			var handler = errorhandler();
 			handler(err, req, res, next);
