@@ -9,6 +9,7 @@ var errorhandler = require('errorhandler');
 var session = require('express-session');
 var config = require('config');
 var mongoose = require('lib/mongoose');
+var mongodb = require('lib/mongodb');
 var log = require('lib/log')(module);
 var HttpError = require('error').HttpError;
 var userService = require('service/userService');
@@ -51,7 +52,9 @@ app.use(session({
 	key : config.get('session:key'),
 	cookie : config.get('session:cookie'),
 	store : new MongoStore({
-		mongoose_connection : mongoose.connection
+		db : config.get('mongodb:db'),
+		host : config.get('mongodb:server:host'),
+		port : config.get('mongodb:server:port')
 	})
 }));
 
