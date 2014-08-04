@@ -1,4 +1,5 @@
 var User = require('models/user').User;
+var mongodb = require('lib/mongodb');
 var async = require('async');
 var crypto = require('crypto');
 var AuthError = require('error').AuthError;
@@ -16,6 +17,24 @@ function checkPassword(user, password) {
 	return encryptPassword(user, password) === user.hashedPassword;
 }
 
+function getUsersCollection() {
+	return mongodb.getDb().collection("users");
+}
+
+function createUser(username, password, callback) {
+	var user = new User(username);
+	setPassword(user, password);
+	var usersCollection = getUsersCollection();
+	usersCollection.insert(user, function(err, results){
+		if (err) {
+			return callback(err);
+		}
+	
+		user._plainPassword = password;
+		callback(null, user);
+	});
+}
+
 /**
  * Авторизация совмещенная с регистрацией.
  * Если пользователь найден по имени тогда проверка пароля,
@@ -25,8 +44,9 @@ function checkPassword(user, password) {
  * @param callback
  */
 function authorize(username, password, callback) {
+	var usersCollection = getUsersCollection();
 	async.waterfall([ function(callback) {
-		User.findOne({
+		usersCollection.findOne({
 			username : username
 		}, callback);
 	}, function(user, callback) {
@@ -37,18 +57,12 @@ function authorize(username, password, callback) {
 				callback(new AuthError("Пароль неверен"));
 			}
 		} else {
-			var user = new User({
-				username : username,
-				password : password
-			});
-			user.save(function(err) {
-				if (err)
-					return callback(err);
-				callback(null, user);
-			});
+			createUser(username, password, callback);
 		}
 	} ], callback);
 }
 
 exports.setPassword = setPassword;
 exports.authorize = authorize;
+exports.createUser = createUser;
+exports.getUsersCollection = getUsersCollection;

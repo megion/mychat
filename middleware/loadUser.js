@@ -1,14 +1,17 @@
-var User = require('models/user').User;
+var userService = require('service/userService');
+var mongodb = require('lib/mongodb');
 
 module.exports = function(req, res, next) {
-  req.user = res.locals.user = null;
+	req.user = res.locals.user = null;
 
-  if (!req.session.user) return next();
+	if (!req.session.user)
+		return next();
 
-  User.findById(req.session.user, function(err, user) {
-    if (err) return next(err);
+	mongodb.findById(req.session.user, userService.getUsersCollection(), function(err, user) {
+		if (err)
+			return next(err);
 
-    req.user = res.locals.user = user;
-    next();
-  });
+		req.user = res.locals.user = user;
+		next();
+	});
 };
