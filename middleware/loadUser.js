@@ -7,7 +7,7 @@ module.exports = function(req, res, next) {
 	if (!req.session.user)
 		return next();
 
-	mongodb.findById(req.session.user, userService.getUsersCollection(), function(err, user) {
+	mongodb.findById(req.session.user, userService.getCollection(), function(err, user) {
 		if (err)
 			return next(err);
 

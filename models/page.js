@@ -1,23 +1,7 @@
-var mongoose = require('lib/mongoose'),
-  Schema = mongoose.Schema,
-  ObjectId = Schema.ObjectId;
+function Page(name, title, parentId) {
+	this.name = name; // str
+	this.title = title; // str
+	this.parentId = parentId; // number
+}
 
-var schema = new Schema({
-  name: {
-    type: String,
-    required: true
-  },
-  title: {
-    type: String
-  },
-  parent : {
-    type : ObjectId,
-    ref: 'Page'
-  },
-  created: {
-    type: Date,
-    'default': Date.now
-  }
-});
-
-exports.Page = mongoose.model('Page', schema);
+exports.Page = Page;

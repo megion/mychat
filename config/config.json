@@ -14,7 +14,9 @@
     "server": {
       "host": "localhost",
       "port": 27017,
-      "options": {}
+      "options": {
+        "auto_reconnect": true
+      }
     },
     "db": "chat",
     "options": {

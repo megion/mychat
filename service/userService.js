@@ -17,14 +17,14 @@ function checkPassword(user, password) {
 	return encryptPassword(user, password) === user.hashedPassword;
 }
 
-function getUsersCollection() {
+function getCollection() {
 	return mongodb.getDb().collection("users");
 }
 
 function createUser(username, password, callback) {
 	var user = new User(username);
 	setPassword(user, password);
-	var usersCollection = getUsersCollection();
+	var usersCollection = getCollection();
 	usersCollection.insert(user, function(err, results){
 		if (err) {
 			return callback(err);
@@ -44,7 +44,7 @@ function createUser(username, password, callback) {
  * @param callback
  */
 function authorize(username, password, callback) {
-	var usersCollection = getUsersCollection();
+	var usersCollection = getCollection();
 	async.waterfall([ function(callback) {
 		usersCollection.findOne({
 			username : username
@@ -65,4 +65,4 @@ function authorize(username, password, callback) {
 exports.setPassword = setPassword;
 exports.authorize = authorize;
 exports.createUser = createUser;
-exports.getUsersCollection = getUsersCollection;
+exports.getCollection = getCollection;
