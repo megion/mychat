@@ -35,17 +35,21 @@ function createUsers(callback) {
 	}, callback);
 }
 
+var globalCounter;
+var MAX_LEVEL = 4;
 function createTreePages(callback) {
-	createSiblingChildPages(null, 0, 0, 4, callback);
+	globalCounter = 0;
+	createSiblingChildPages(null, 0, callback);
 }
 
-function createChildrenPage(parent, level, localPosition, parentPosition, maxLevel, callback) {
-	if (level == maxLevel) {
+function createChildrenPage(parent, level, position, callback) {
+	if (level == MAX_LEVEL) {
 		return;
 	}
 
-	var name = parent ? (parent.name + "_" + localPosition) : ("name_" + localPosition);
-	var title = parent ? (parent.title + "_" + localPosition) : ("title_" + localPosition);
+	var name = parent ? (parent.name + "_" + position) : ("name_" + position);
+	var title = parent ? (parent.title + "_" + position)
+			: ("title_" + position);
 	pageService.createPage(name, title, parent ? parent._id : null, function(
 			err, childPage) {
 		if (err) {
@@ -53,32 +57,38 @@ function createChildrenPage(parent, level, localPosition, parentPosition, maxLev
 			console.error('Error:', err);
 			return callback(err);
 		}
-		
-		var childPosition;
-		if (parentPosition==0) {
-			childPosition = localPosition + 1;
-		} else {
-			childPosition = parentPosition * (localPosition + 1);
-		}
-		console.log("childPosition: " + childPosition);
-		console.log("New page created: " + childPage.name);
-		if (childPosition >= (maxLevel * maxLevel * maxLevel * maxLevel)) {
-			// mark finish
+
+		globalCounter++;
+		if (globalCounter == treeCount(MAX_LEVEL)) {
 			console.log("Finish. All pages created");
 			return callback(null);
 		}
-		
-		createSiblingChildPages(childPage, level + 1, childPosition, maxLevel, callback);
+		createSiblingChildPages(childPage, level + 1, callback);
 	});
 }
 
 /**
  * Создать дочерние узлы
  */
-function createSiblingChildPages(parent, level, parentPosition, maxLevel, callback) {
-	for (var p = 0; p < maxLevel; p++) {
-		createChildrenPage(parent, level, p, parentPosition, maxLevel, callback);
+function createSiblingChildPages(parent, level, callback) {
+	for (var p = 0; p < MAX_LEVEL; p++) {
+		createChildrenPage(parent, level, p, callback);
 	}
+}
+
+/**
+ * 
+ * @param n
+ * @returns количество элементов в дереве
+ */
+function treeCount(n) {
+	var result = n;
+	var x = n;
+	for (var i = 1; i < n; i++) {
+		x = x * n;
+		result = result + x;
+	}
+	return result;
 }
 
 function close(callback) {
