@@ -3,6 +3,10 @@ var Page = require('models/page').Page,
     async = require('async'),
     ObjectId = mongodb.ObjectID;
 
+var log = require('lib/log')(module);
+
+var MAX_LEVEL = 3;
+
 /**
  * Find all child for specified parents
  * 
@@ -12,7 +16,7 @@ var Page = require('models/page').Page,
  *            filer parents object
  * @param callback
  */
-function findChildsByParents(treeCollection, parents, callback) {
+function findChildrenByParents(treeCollection, parents, callback) {
 	var childsFilter;
 	if (parents) {
 		if (Array.isArray(parents)) {
@@ -27,7 +31,7 @@ function findChildsByParents(treeCollection, parents, callback) {
 					ids[i] = ObjectId(parents[i]._id);
 				}
 				childsFilter = {
-					parentId : {$in:[1,2,3]}
+					parentId : {$in:ids}
 				};
 			}
 		}
@@ -37,22 +41,91 @@ function findChildsByParents(treeCollection, parents, callback) {
 		};
 	}
 
-	treeCollection.find(childsFilter).toArray(function(err, childs) {
+	treeCollection.find(childsFilter).toArray(function(err, children) {
 		if (err) {
 			return callback(err);
 		}
 		
-		console.log("retrieved childs:");
-		console.log(childs);
-		callback(null, childs);
+		log.info("retrieved children: " + children);
+		callback(null, children);
 	});
 }
 
-function feedRootNodes(treeCollection, callback) {	
+/**
+ * Connect children of its parent
+ * @param treeNodes array tree nodes which contains parents
+ * @param excludeParentId - parent id for exclude node.parentId for connection
+ */
+function connectChildrenToParent(treeNodes, excludeParentId) {
+	var nodesMap = {};
+	// fill nodes map
+	for(var i = 0; i < treeNodes.length; i++) {
+		nodesMap[node._id] = node;
+	}
+	
+	// connect children to parent 
+	for (var i = 0; i < treeNodes.length; i++) {
+		var node = treeNodes[i];
+		if (node.parentId && 
+				!(excludeParentId && (node.parentId==excludeParentId))) {
+			var parent = nodesMap[node.parentId];
+			if (parent) {
+				if (!parent.children) {
+					parent.children = [];
+				}
+				parent.children.push(node);
+			} else {
+				// array treeNodes have not valid state
+				log.error("Tree node not found by id: " + node.parentId + ". Skip this node");
+			}
+		}
+	}
+}
+
+function buildTreeByParents(treeCollection, parents, level, allNodes, callback) {
+	findChildrenByParents(treeCollection, parents, function(err, children) {
+		if (err) {
+			return callback(err);
+		}
+		
+		if (children && (children.length > 0)) {
+			var nodes = parents.concat(children)
+			level++;
+			if (level == MAX_LEVEL) {
+				return callback(null, nodes);
+			}
+			buildTreeByParents(treeCollection, children, level, nodes, callback);
+		} else {
+			// no more children. Finalize build tree.
+			// mark parents no children
+			for (var i = 0; i < parents.length; i++) {
+				parents[i].noChildren = true;
+			}
+			callback(null, allNodes);
+		}
+		
+	});
+}
+
+function feedRootNodes(treeCollection, callback) {
+	findChildsByParents(treeCollection, null, function(err, rootNodes) {
+		if (err) {
+			return callback(err);
+		}
+		
+		buildTreeByParents(treeCollection, rootNodes, 1, [], function(err, treeNodes) {
+			if (err) {
+				return callback(err);
+			}
+			
+			connectChildrenToParent(treeNodes, null);
+			callback(null, rootNodes);
+		});
+	});
 }
 function feedChildNodes(treeCollection, node, callback) {	
 }
 function feedTreeScopeNodes(treeCollection, node, callback) {	
 }
 
-exports.findChildsByParents = findChildsByParents;
+exports.findChildrenByParents = findChildrenByParents;
