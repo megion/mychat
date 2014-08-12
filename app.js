@@ -68,6 +68,7 @@ function initWebApp(app) {
 
 	//var routes = require('./routes/index');
 	var users = require('./routes/users');
+	var pages = require('./routes/pages');
 	var chat = require('./routes/chat');
 	var frontpage = require('./routes/frontpage');
 	var login = require('./routes/login');
@@ -79,6 +80,7 @@ function initWebApp(app) {
 	app.use('/login', login);
 	app.use('/logout', logout);
 	app.use('/users', users);
+	app.use('/pages', pages);
 
 	//app.use(function(req, res, next) {
 		//req.session.numberOfVisits = req.session.numberOfVisits + 1 || 1;
