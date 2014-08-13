@@ -1,4 +1,7 @@
-var Page = require('models/page').Page, mongodb = require('lib/mongodb'), async = require('async'), ObjectId = require('mongodb').ObjectID;
+var Page = require('models/page').Page,
+mongodb = require('lib/mongodb'),
+async = require('async'),
+ObjectId = require('mongodb').ObjectID;
 
 var log = require('lib/log')(module);
 
@@ -13,26 +16,39 @@ var MAX_LEVEL = 3;
  *            filer parents object
  * @param callback
  */
-function findChildrenByParents(treeCollection, parents, callback) {
-	var childsFilter;
+function findChildrenByParentsArray(treeCollection, parents, callback) {
+	var parentIds;
 	if (parents) {
 		if (Array.isArray(parents)) {
-			// массив
-			if (parents.length == 0) {
-				childsFilter = {
-					parentId : null
-				};
-			} else {
-				var ids = [];
-				for (var i = 0; i < parents.length; i++) {
-					ids[i] = new ObjectId(parents[i]._id);
-				}
-				childsFilter = {
-					parentId : {
-						$in : ids
-					}
-				};
+			parentIds = [];
+			for (var i = 0; i < parents.length; i++) {
+				parentIds[i] = new ObjectId(parents[i]._id);
 			}
+		} else {
+			parentIds = new ObjectId(parents[i]._id);
+		}
+	} else {
+		parentIds = null;
+	}
+
+	findChildrenByParentIds(treeCollection, parentIds, callback);
+}
+
+function findChildrenByParentIds(treeCollection, parentIds, callback) {
+	var childsFilter;
+	if (parentIds) {
+		if (Array.isArray(parentIds)) {
+			// array values
+			childsFilter = {
+				parentId : {
+					$in : parentIds
+				}
+			};
+		} else {
+			// single value
+			childsFilter = {
+				parentId : parentIds
+			};
 		}
 	} else {
 		childsFilter = {
@@ -88,19 +104,38 @@ function connectChildrenToParent(treeNodes, topNodeIdsSet) {
 			}
 		}
 	}
-	
+
 	// finish processing nodes - sort and set flags
 	for (var i = 0; i < treeNodes.length; i++) {
 		var node = treeNodes[i];
-		
-		// ...
+		// sorting
+		if (node.children && !node.childrenIsSorted) {
+			node.children.sort(compareNode);
+			node.childrenIsSorted = true;
+		}
+
+		// set need loading flag
+		if ((node.level == (MAX_LEVEL - 1)) && node.children) {
+			node.needLoad = true;
+		}
 	}
-	
+
+	// remove redundant info
+	for (var i = 0; i < treeNodes.length; i++) {
+		var node = treeNodes[i];
+		delete node.childrenIsSorted;
+		delete node.level;
+	}
+
 	return topNodes;
 }
 
+function compareNode(nodeA, nodeB) {
+	return nodeA.order - nodeB.order;
+}
+
 function buildTreeByParents(treeCollection, parents, level, allNodes, callback) {
-	findChildrenByParents(treeCollection, parents,
+	findChildrenByParentsArray(treeCollection, parents,
 			function(err, children) {
 				if (err) {
 					return callback(err);
@@ -129,7 +164,7 @@ function transformToIdsSet(nodes) {
 	for (var i = 0; i < nodes.length; i++) {
 		idsSet[nodes[i]._id.toString()] = true;
 	}
-	return idsSet; 
+	return idsSet;
 }
 
 function setLevel(nodes, level) {
@@ -139,7 +174,7 @@ function setLevel(nodes, level) {
 }
 
 function feedRootNodes(treeCollection, callback) {
-	findChildrenByParents(treeCollection, null, function(err, rootNodes) {
+	findChildrenByParentIds(treeCollection, null, function(err, rootNodes) {
 		if (err) {
 			return callback(err);
 		}
@@ -147,21 +182,51 @@ function feedRootNodes(treeCollection, callback) {
 		// set current level
 		var level = 1;
 		setLevel(rootNodes, level);
-		buildTreeByParents(treeCollection, rootNodes, level, rootNodes, function(err,
-				treeNodes) {
-			if (err) {
-				return callback(err);
-			}
+		buildTreeByParents(treeCollection, rootNodes, level, rootNodes,
+				function(err, treeNodes) {
+					if (err) {
+						return callback(err);
+					}
 
-			var topNodes = connectChildrenToParent(treeNodes, transformToIdsSet(rootNodes));
-			callback(null, topNodes);
-		});
+					var topNodes = connectChildrenToParent(treeNodes,
+							transformToIdsSet(rootNodes));
+					callback(null, topNodes);
+				});
 	});
 }
-function feedChildNodes(treeCollection, node, callback) {
+function feedChildNodes(treeCollection, nodeId, callback) {
+	treeCollection.findOne({
+		_id : new ObjectId(nodeId)
+	}, function(err, node) {
+		if (err) {
+			return callback(err);
+		}
+
+		log.info("retrieved node: " + node);
+
+		var currentNodeAsArray = [ node ];
+
+		// set current level
+		var level = 1;
+		setLevel(currentNodeAsArray, level);
+		buildTreeByParents(treeCollection, currentNodeAsArray, level,
+				currentNodeAsArray, function(err, treeNodes) {
+					if (err) {
+						return callback(err);
+					}
+
+					var topNodes = connectChildrenToParent(treeNodes,
+							transformToIdsSet(currentNodeAsArray));
+					callback(null, topNodes);
+				});
+	});
+
 }
-function feedTreeScopeNodes(treeCollection, node, callback) {
+function feedTreeScopeNodes(treeCollection, nodeId, callback) {
+	// 1. сначала необходимо получить для узла nodeId все родительские узлы
+	
+	// 2. для этого узла и всех родительских получить дочерние узлы
 }
 
-exports.findChildrenByParents = findChildrenByParents;
 exports.feedRootNodes = feedRootNodes;
+exports.feedChildNodes = feedChildNodes;

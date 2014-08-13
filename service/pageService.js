@@ -6,8 +6,8 @@ function getCollection() {
 	return mongodb.getDb().collection("pages");
 }
 
-function createPage(name, title, parentId, callback) {
-	var page = new Page(name, title, parentId);
+function createPage(name, title, parentId, order, callback) {
+	var page = new Page(name, title, parentId, order);
 	var collection = getCollection();
 	collection.insert(page, function(err, results){
 		if (err) {

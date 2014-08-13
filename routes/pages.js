@@ -16,4 +16,13 @@ router.get('/', function(req, res, next) {
 	});
 });
 
+router.get('/page/:id', function(req, res, next) {
+	var pageCollection = pageService.getCollection();
+	treeService.feedChildNodes(pageCollection, req.params.id, function(err, childNodes) {
+		if (err)
+			return next(err);
+		res.json(childNodes);
+	});
+});
+
 module.exports = router;

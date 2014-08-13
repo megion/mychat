@@ -36,9 +36,10 @@ function createUsers(callback) {
 }
 
 var globalCounter;
-var MAX_LEVEL = 4;
+var MAX_LEVEL = 5;
 function createTreePages(callback) {
 	globalCounter = 0;
+	console.log("Start create " + treeCount(MAX_LEVEL) + " nodes");
 	createSiblingChildPages(null, 0, callback);
 }
 
@@ -50,7 +51,7 @@ function createChildrenPage(parent, level, position, callback) {
 	var name = parent ? (parent.name + "_" + position) : ("name_" + position);
 	var title = parent ? (parent.title + "_" + position)
 			: ("title_" + position);
-	pageService.createPage(name, title, parent ? parent._id : null, function(
+	pageService.createPage(name, title, parent ? parent._id : null, position, function(
 			err, childPage) {
 		if (err) {
 			console.error("childPage not created: " + name);
