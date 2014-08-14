@@ -25,4 +25,13 @@ router.get('/page/:id', function(req, res, next) {
 	});
 });
 
+router.get('/pageTreeScope/:id', function(req, res, next) {
+	var pageCollection = pageService.getCollection();
+	treeService.feedTreeScopeNodes(pageCollection, req.params.id, function(err, treeScopeNodes) {
+		if (err)
+			return next(err);
+		res.json(treeScopeNodes);
+	});
+});
+
 module.exports = router;

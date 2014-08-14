@@ -1,7 +1,4 @@
-var Page = require('models/page').Page,
-mongodb = require('lib/mongodb'),
-async = require('async'),
-ObjectId = require('mongodb').ObjectID;
+var Page = require('models/page').Page, mongodb = require('lib/mongodb'), async = require('async'), ObjectId = require('mongodb').ObjectID;
 
 var log = require('lib/log')(module);
 
@@ -16,7 +13,7 @@ var MAX_LEVEL = 3;
  *            filer parents object
  * @param callback
  */
-function findChildrenByParentsArray(treeCollection, parents, callback) {
+function findChildrenByParents(treeCollection, parents, callback) {
 	var parentIds;
 	if (parents) {
 		if (Array.isArray(parents)) {
@@ -66,6 +63,27 @@ function findChildrenByParentIds(treeCollection, parentIds, callback) {
 	});
 }
 
+function findAllParents(treeCollection, node, allParents, callback) {
+	if (!node.parentId) {
+		// finish search
+		return callback(null, allParents);
+	}
+
+	treeCollection.findOne({
+		_id : new ObjectId(node.parentId)
+	}, function(err, parent) {
+		if (err) {
+			return callback(err);
+		}
+
+		if (!parent) {
+			throw new Error("Tree node not found by id: " + node.parentId);
+		}
+		allParents.push(parent);
+		findAllParents(treeCollection, parent, allParents, callback);
+	});
+}
+
 /**
  * Connect children of its parent
  * 
@@ -99,7 +117,7 @@ function connectChildrenToParent(treeNodes, topNodeIdsSet) {
 				parent.children.push(node);
 			} else {
 				// array treeNodes have not valid state
-				log.error("Tree node not found by id: " + parentId
+				throw new Error("Tree node not found by id: " + parentId
 						+ ". Skip this node");
 			}
 		}
@@ -135,7 +153,7 @@ function compareNode(nodeA, nodeB) {
 }
 
 function buildTreeByParents(treeCollection, parents, level, allNodes, callback) {
-	findChildrenByParentsArray(treeCollection, parents,
+	findChildrenByParents(treeCollection, parents,
 			function(err, children) {
 				if (err) {
 					return callback(err);
@@ -159,6 +177,39 @@ function buildTreeByParents(treeCollection, parents, level, allNodes, callback) 
 			});
 }
 
+function buildTreeScope(treeCollection, node, allNodes, callback) {
+	if (!node.parentId) {
+		// finish search
+		return callback(null, allNodes, node);
+	}
+
+	treeCollection.findOne({
+		_id : new ObjectId(node.parentId)
+	}, function(err, parent) {
+		if (err) {
+			return callback(err);
+		}
+
+		if (!parent) {
+			throw new Error("Tree node not found by id: " + node.parentId);
+		}
+
+		var parentAsArray = [ parent ];
+
+		// set current level
+		var level = 1;
+		setLevel(parentAsArray, level);
+		buildTreeByParents(treeCollection, parentAsArray, level, parentAsArray,
+				function(err, treeNodes) {
+					if (err) {
+						return callback(err);
+					}
+					var nodes = allNodes.concat(treeNodes);
+					buildTreeScope(treeCollection, parent, nodes, callback);
+				});
+	});
+}
+
 function transformToIdsSet(nodes) {
 	var idsSet = {};
 	for (var i = 0; i < nodes.length; i++) {
@@ -171,6 +222,36 @@ function setLevel(nodes, level) {
 	for (var i = 0; i < nodes.length; i++) {
 		nodes[i].level = level;
 	}
+}
+
+/**
+ * Алгоритм для включения узлов с минимальным уровнем т.к. в результате может
+ * быть информация от нескольких родительских узлов одновременно и для узла
+ * будет запоминаться его минимальный уровень вложенности. Это позволит
+ * правильно сделать вывод о необходимости подгрузки узла с сервера.
+ * 
+ * Требует доработки
+ */
+function normolizeTreeNodes(nodes) {
+	var nodesMap = {};
+	for (var i = 0; i < nodes.length; i++) {
+		var node = nodes[i];
+		var id = node._id.toString()
+		if (nodesMap[id]) {
+			var exNode = nodesMap[id];
+			if (exNode.level < node.level) {
+				nodesMap[id] = node;
+			}
+		} else {
+			nodesMap[id] = node;
+		}
+	}
+
+	var normNodes = [];
+	for ( var key in nodesMap) {
+		normNodes.push(nodesMap[key]);
+	}
+	return normNodes;
 }
 
 function feedRootNodes(treeCollection, callback) {
@@ -224,9 +305,47 @@ function feedChildNodes(treeCollection, nodeId, callback) {
 }
 function feedTreeScopeNodes(treeCollection, nodeId, callback) {
 	// 1. сначала необходимо получить для узла nodeId все родительские узлы
-	
+
 	// 2. для этого узла и всех родительских получить дочерние узлы
+
+	treeCollection.findOne({
+		_id : new ObjectId(nodeId)
+	}, function(err, node) {
+		if (err) {
+			return callback(err);
+		}
+
+		log.info("retrieved node: " + node);
+
+		var currentNodeAsArray = [ node ];
+
+		// set current level
+		var level = 1;
+		setLevel(currentNodeAsArray, level);
+		// включим текущую ноду
+		buildTreeByParents(treeCollection, currentNodeAsArray, level,
+				currentNodeAsArray, function(err, treeNodes) {
+					if (err) {
+						return callback(err);
+					}
+
+					// построение дерева для всех родителей
+					buildTreeScope(treeCollection, node, treeNodes, function(
+							err, allNodes, topNode) {
+						if (err) {
+							return callback(err);
+						}
+
+						var normNodes = normolizeTreeNodes(allNodes);
+
+						var topNodes = connectChildrenToParent(normNodes,
+								transformToIdsSet([ topNode ]));
+						callback(null, topNodes);
+					});
+				});
+	});
 }
 
 exports.feedRootNodes = feedRootNodes;
 exports.feedChildNodes = feedChildNodes;
+exports.feedTreeScopeNodes = feedTreeScopeNodes;
