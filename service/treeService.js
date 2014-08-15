@@ -57,8 +57,6 @@ function findChildrenByParentIds(treeCollection, parentIds, callback) {
 		if (err) {
 			return callback(err);
 		}
-
-		log.info("retrieved children: " + children);
 		callback(null, children);
 	});
 }
@@ -141,6 +139,11 @@ function connectChildrenToParent(treeNodes, topNodeIdsSet) {
 	// remove redundant info
 	for (var i = 0; i < treeNodes.length; i++) {
 		var node = treeNodes[i];
+		
+		// rename property _id to id
+		node.id = node._id.toString();
+		delete node._id;
+		
 		delete node.childrenIsSorted;
 		delete node.level;
 	}
@@ -282,9 +285,7 @@ function feedChildNodes(treeCollection, nodeId, callback) {
 		if (err) {
 			return callback(err);
 		}
-
-		log.info("retrieved node: " + node);
-
+		
 		var currentNodeAsArray = [ node ];
 
 		// set current level
@@ -303,19 +304,22 @@ function feedChildNodes(treeCollection, nodeId, callback) {
 	});
 
 }
+
+/**
+ * Поднимается вверх по родителям указанного узла 
+ * и для каждого найденного родителя получить несколько вложенных узлов деревьев.
+ * Также получаются вложенные узлы и для самого указанного узла. 
+ * @param treeCollection
+ * @param nodeId
+ * @param callback
+ */
 function feedTreeScopeNodes(treeCollection, nodeId, callback) {
-	// 1. сначала необходимо получить для узла nodeId все родительские узлы
-
-	// 2. для этого узла и всех родительских получить дочерние узлы
-
 	treeCollection.findOne({
 		_id : new ObjectId(nodeId)
 	}, function(err, node) {
 		if (err) {
 			return callback(err);
 		}
-
-		log.info("retrieved node: " + node);
 
 		var currentNodeAsArray = [ node ];
 
@@ -328,7 +332,6 @@ function feedTreeScopeNodes(treeCollection, nodeId, callback) {
 					if (err) {
 						return callback(err);
 					}
-
 					// построение дерева для всех родителей
 					buildTreeScope(treeCollection, node, treeNodes, function(
 							err, allNodes, topNode) {

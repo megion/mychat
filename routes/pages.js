@@ -12,13 +12,15 @@ router.get('/', function(req, res, next) {
 	treeService.feedRootNodes(pageCollection, function(err, rootNodes) {
 		if (err)
 			return next(err);
-		res.json(rootNodes);
+		
+		res.render('treePages', { treeJson: rootNodes });
+		//res.json(rootNodes);
 	});
 });
 
-router.get('/page/:id', function(req, res, next) {
+router.get('/page', function(req, res, next) {
 	var pageCollection = pageService.getCollection();
-	treeService.feedChildNodes(pageCollection, req.params.id, function(err, childNodes) {
+	treeService.feedChildNodes(pageCollection, req.param("nodeId"), function(err, childNodes) {
 		if (err)
 			return next(err);
 		res.json(childNodes);
