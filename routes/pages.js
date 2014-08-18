@@ -27,9 +27,9 @@ router.get('/page', function(req, res, next) {
 	});
 });
 
-router.get('/pageTreeScope/:id', function(req, res, next) {
+router.get('/pageTreeScope', function(req, res, next) {
 	var pageCollection = pageService.getCollection();
-	treeService.feedTreeScopeNodes(pageCollection, req.params.id, function(err, treeScopeNodes) {
+	treeService.feedTreeScopeNodes(pageCollection, req.param("nodeId"), function(err, treeScopeNodes) {
 		if (err)
 			return next(err);
 		res.json(treeScopeNodes);

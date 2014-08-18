@@ -2,23 +2,25 @@
 <% layout('layout/page') -%>
 <% block('title', 'Привет ≥︺‿︺≤'); -%>
 
-<div class="pageBrowse">
-	<div class="colControl">
-		<div class="browseBoxContext">
-			<div class="browseBox">
-				<div class="menuList">
-					<!-- tree -->
+<!-- tree -->
 					<ul id="treePages" class="filetree treeview">
 					</ul>
 
 					<script type="text/javascript">
-						var treeObj = <%=treeJson%>;
+						var treeObj = <%-JSON.stringify(treeJson)%>;
 						var treeControl = new mycontrol.TreeControl(
 								"treePages", "pages/page",
 								"pages/pageTreeScope", true,
 								treeObj);
 						treeControl.init();
 					</script>
+
+<div class="pageBrowse">
+	<div class="colControl">
+		<div class="browseBoxContext">
+			<div class="browseBox">
+				<div class="menuList">
+					
 					
 				</div>
 				<div class="pageList">

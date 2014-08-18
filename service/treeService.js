@@ -130,6 +130,9 @@ function connectChildrenToParent(treeNodes, topNodeIdsSet) {
 			node.childrenIsSorted = true;
 		}
 
+		if (node.level >= MAX_LEVEL) {
+			node.fakeNode = true;
+		}
 		// set need loading flag
 		if ((node.level == (MAX_LEVEL - 1)) && node.children) {
 			node.needLoad = true;
@@ -284,6 +287,10 @@ function feedChildNodes(treeCollection, nodeId, callback) {
 	}, function(err, node) {
 		if (err) {
 			return callback(err);
+		}
+		
+		if (!node) {
+			throw new Error("Tree node not found by id: " + nodeId);
 		}
 		
 		var currentNodeAsArray = [ node ];
