@@ -22,7 +22,7 @@ function findChildrenByParents(treeCollection, parents, callback) {
 				parentIds[i] = new ObjectId(parents[i]._id);
 			}
 		} else {
-			parentIds = new ObjectId(parents[i]._id);
+			parentIds = new ObjectId(parents._id);
 		}
 	} else {
 		parentIds = null;
@@ -218,6 +218,9 @@ function buildTreeByParents(treeCollection, parents, level, allNodes, callback) 
 				}
 
 				if (children && (children.length > 0)) {
+					if (!Array.isArray(allNodes)) {
+						allNodes = [allNodes];
+					}
 					var nodes = allNodes.concat(children)
 					level++;
 					// set current level
@@ -265,6 +268,10 @@ function buildTreeScope(treeCollection, node, allNodes, callback) {
 		getTreeNodesByParents(treeCollection, parent, function(err, treeNodes) {
 			if (err) {
 				return callback(err);
+			}
+			
+			if (!Array.isArray(allNodes)) {
+				allNodes = [allNodes];
 			}
 			var nodes = allNodes.concat(treeNodes);
 			buildTreeScope(treeCollection, parent, nodes, callback);
