@@ -82,6 +82,58 @@ function findAllParents(treeCollection, node, allParents, callback) {
 	});
 }
 
+function transformToIdsSet(nodes) {
+	var idsSet = {};
+	if (Array.isArray(nodes)) {
+		for (var i = 0; i < nodes.length; i++) {
+			idsSet[nodes[i]._id.toString()] = true;
+		}
+	} else {
+		idsSet[nodes._id.toString()] = true;
+	}
+	return idsSet;
+}
+
+function setLevel(nodes, level) {
+	if (Array.isArray(nodes)) {
+		for (var i = 0; i < nodes.length; i++) {
+			nodes[i].level = level;
+		}
+	} else {
+		nodes.level = level;
+	}
+}
+
+/**
+ * Алгоритм для включения узлов с минимальным уровнем т.к. в результате может
+ * быть информация от нескольких родительских узлов одновременно и для узла
+ * будет запоминаться его минимальный уровень вложенности. Это позволит
+ * правильно сделать вывод о необходимости подгрузки узла с сервера.
+ * 
+ * Требует доработки
+ */
+function normolizeTreeNodes(nodes) {
+	var nodesMap = {};
+	for (var i = 0; i < nodes.length; i++) {
+		var node = nodes[i];
+		var id = node._id.toString()
+		if (nodesMap[id]) {
+			var exNode = nodesMap[id];
+			if (exNode.level < node.level) {
+				nodesMap[id] = node;
+			}
+		} else {
+			nodesMap[id] = node;
+		}
+	}
+
+	var normNodes = [];
+	for ( var key in nodesMap) {
+		normNodes.push(nodesMap[key]);
+	}
+	return normNodes;
+}
+
 /**
  * Connect children of its parent
  * 
@@ -182,6 +234,16 @@ function buildTreeByParents(treeCollection, parents, level, allNodes, callback) 
 
 			});
 }
+/**
+ * Получает узлы дерева для указанных родителей. 
+ * Количество уровней вложенности узлов ограничено MAX_LEVEL
+ */
+function getTreeNodesByParents(treeCollection, parents, callback) {
+	// set current level to 1
+	var level = 1;
+	setLevel(parents, level);
+	buildTreeByParents(treeCollection, parents, level, parents, callback);
+}
 
 function buildTreeScope(treeCollection, node, allNodes, callback) {
 	if (!node.parentId) {
@@ -200,64 +262,14 @@ function buildTreeScope(treeCollection, node, allNodes, callback) {
 			throw new Error("Tree node not found by id: " + node.parentId);
 		}
 
-		var parentAsArray = [ parent ];
-
-		// set current level
-		var level = 1;
-		setLevel(parentAsArray, level);
-		buildTreeByParents(treeCollection, parentAsArray, level, parentAsArray,
-				function(err, treeNodes) {
-					if (err) {
-						return callback(err);
-					}
-					var nodes = allNodes.concat(treeNodes);
-					buildTreeScope(treeCollection, parent, nodes, callback);
-				});
-	});
-}
-
-function transformToIdsSet(nodes) {
-	var idsSet = {};
-	for (var i = 0; i < nodes.length; i++) {
-		idsSet[nodes[i]._id.toString()] = true;
-	}
-	return idsSet;
-}
-
-function setLevel(nodes, level) {
-	for (var i = 0; i < nodes.length; i++) {
-		nodes[i].level = level;
-	}
-}
-
-/**
- * Алгоритм для включения узлов с минимальным уровнем т.к. в результате может
- * быть информация от нескольких родительских узлов одновременно и для узла
- * будет запоминаться его минимальный уровень вложенности. Это позволит
- * правильно сделать вывод о необходимости подгрузки узла с сервера.
- * 
- * Требует доработки
- */
-function normolizeTreeNodes(nodes) {
-	var nodesMap = {};
-	for (var i = 0; i < nodes.length; i++) {
-		var node = nodes[i];
-		var id = node._id.toString()
-		if (nodesMap[id]) {
-			var exNode = nodesMap[id];
-			if (exNode.level < node.level) {
-				nodesMap[id] = node;
+		getTreeNodesByParents(treeCollection, parent, function(err, treeNodes) {
+			if (err) {
+				return callback(err);
 			}
-		} else {
-			nodesMap[id] = node;
-		}
-	}
-
-	var normNodes = [];
-	for ( var key in nodesMap) {
-		normNodes.push(nodesMap[key]);
-	}
-	return normNodes;
+			var nodes = allNodes.concat(treeNodes);
+			buildTreeScope(treeCollection, parent, nodes, callback);
+		});
+	});
 }
 
 function feedRootNodes(treeCollection, callback) {
@@ -266,19 +278,15 @@ function feedRootNodes(treeCollection, callback) {
 			return callback(err);
 		}
 
-		// set current level
-		var level = 1;
-		setLevel(rootNodes, level);
-		buildTreeByParents(treeCollection, rootNodes, level, rootNodes,
-				function(err, treeNodes) {
-					if (err) {
-						return callback(err);
-					}
+		getTreeNodesByParents(treeCollection, rootNodes, function(err, treeNodes) {
+			if (err) {
+				return callback(err);
+			}
 
-					var topNodes = connectChildrenToParent(treeNodes,
-							transformToIdsSet(rootNodes));
-					callback(null, topNodes);
-				});
+			var topNodes = connectChildrenToParent(treeNodes,
+					transformToIdsSet(rootNodes));
+			callback(null, topNodes);
+		});
 	});
 }
 function feedChildNodes(treeCollection, nodeId, callback) {
@@ -293,23 +301,16 @@ function feedChildNodes(treeCollection, nodeId, callback) {
 			throw new Error("Tree node not found by id: " + nodeId);
 		}
 		
-		var currentNodeAsArray = [ node ];
+		getTreeNodesByParents(treeCollection, node, function(err, treeNodes) {
+			if (err) {
+				return callback(err);
+			}
 
-		// set current level
-		var level = 1;
-		setLevel(currentNodeAsArray, level);
-		buildTreeByParents(treeCollection, currentNodeAsArray, level,
-				currentNodeAsArray, function(err, treeNodes) {
-					if (err) {
-						return callback(err);
-					}
-
-					var topNodes = connectChildrenToParent(treeNodes,
-							transformToIdsSet(currentNodeAsArray));
-					callback(null, topNodes);
-				});
+			var topNodes = connectChildrenToParent(treeNodes,
+					transformToIdsSet(node));
+			callback(null, topNodes);
+		});
 	});
-
 }
 
 /**
@@ -327,32 +328,40 @@ function feedTreeScopeNodes(treeCollection, nodeId, callback) {
 		if (err) {
 			return callback(err);
 		}
-
-		var currentNodeAsArray = [ node ];
-
-		// set current level
-		var level = 1;
-		setLevel(currentNodeAsArray, level);
-		// включим текущую ноду
-		buildTreeByParents(treeCollection, currentNodeAsArray, level,
-				currentNodeAsArray, function(err, treeNodes) {
+		
+		getTreeNodesByParents(treeCollection, node, function(err, treeNodes) {
+			if (err) {
+				return callback(err);
+			}
+			// построение дерева для всех родителей
+			buildTreeScope(treeCollection, node, treeNodes, function(
+					err, allNodes, topNode) {
+				if (err) {
+					return callback(err);
+				}
+				
+				// дополнительно получаем root узлы с детьми
+				findChildrenByParentIds(treeCollection, null, function(err, rootNodes) {
 					if (err) {
 						return callback(err);
 					}
-					// построение дерева для всех родителей
-					buildTreeScope(treeCollection, node, treeNodes, function(
-							err, allNodes, topNode) {
+					
+					getTreeNodesByParents(treeCollection, rootNodes, function(err, treeNodes) {
 						if (err) {
 							return callback(err);
 						}
-
+						
+						allNodes = allNodes.concat(treeNodes);
 						var normNodes = normolizeTreeNodes(allNodes);
 
 						var topNodes = connectChildrenToParent(normNodes,
-								transformToIdsSet([ topNode ]));
+								transformToIdsSet(rootNodes));
 						callback(null, topNodes);
 					});
 				});
+				
+			});
+		});
 	});
 }
 
