@@ -1,4 +1,7 @@
-var Page = require('models/page').Page, mongodb = require('lib/mongodb'), async = require('async'), ObjectId = require('mongodb').ObjectID;
+var Page = require('models/page').Page,
+    mongodb = require('lib/mongodb'),
+    async = require('async'),
+    ObjectId = require('mongodb').ObjectID;
 
 var log = require('lib/log')(module);
 
@@ -105,21 +108,19 @@ function setLevel(nodes, level) {
 }
 
 /**
- * Алгоритм для включения узлов с минимальным уровнем т.к. в результате может
- * быть информация от нескольких родительских узлов одновременно и для узла
- * будет запоминаться его минимальный уровень вложенности. Это позволит
- * правильно сделать вывод о необходимости подгрузки узла с сервера.
- * 
- * Требует доработки
+ * Remove redundant nodes from nodes array. If for the one Id of node present
+ * several nodes then node have lowest level will be apply to result array. Such
+ * algorithm to make a right conclusion about the necessity of loading the site
+ * from the server.
  */
 function normolizeTreeNodes(nodes) {
 	var nodesMap = {};
 	for (var i = 0; i < nodes.length; i++) {
 		var node = nodes[i];
 		var id = node._id.toString()
-		if (nodesMap[id]) {
-			var exNode = nodesMap[id];
-			if (exNode.level < node.level) {
+		var exNode = nodesMap[id];
+		if (exNode) {
+			if (node.level < exNode.level) {
 				nodesMap[id] = node;
 			}
 		} else {
@@ -135,15 +136,21 @@ function normolizeTreeNodes(nodes) {
 }
 
 /**
- * Connect children of its parent
+ * Function build tree for specified treeNodes.
+ * Process building are several operations: 
+ * 1) connect children of its parent,
+ * 2) sort children using order
+ * 3) initialize properties (needLoad, fakeNode).
+ * 
+ * Function return top nodes array.
  * 
  * @param treeNodes
- *            array tree nodes which contains parents
+ *            array tree nodes
  * @param topNodeIdsSet -
  *            object contains id of top nodes for exclude node.parentId for
  *            connection
  */
-function connectChildrenToParent(treeNodes, topNodeIdsSet) {
+function processBuildTree(treeNodes, topNodeIdsSet) {
 	var nodesMap = {};
 	// fill nodes map
 	for (var i = 0; i < treeNodes.length; i++) {
@@ -172,6 +179,8 @@ function connectChildrenToParent(treeNodes, topNodeIdsSet) {
 			}
 		}
 	}
+	
+	topNodes.sort(compareNode);
 
 	// finish processing nodes - sort and set flags
 	for (var i = 0; i < treeNodes.length; i++) {
@@ -218,9 +227,6 @@ function buildTreeByParents(treeCollection, parents, level, allNodes, callback) 
 				}
 
 				if (children && (children.length > 0)) {
-					if (!Array.isArray(allNodes)) {
-						allNodes = [allNodes];
-					}
 					var nodes = allNodes.concat(children)
 					level++;
 					// set current level
@@ -238,8 +244,7 @@ function buildTreeByParents(treeCollection, parents, level, allNodes, callback) 
 			});
 }
 /**
- * Получает узлы дерева для указанных родителей. 
- * Количество уровней вложенности узлов ограничено MAX_LEVEL
+ * Get tree nodes for specified parents limits by MAX_LEVEL.
  */
 function getTreeNodesByParents(treeCollection, parents, callback) {
 	// set current level to 1
@@ -265,13 +270,9 @@ function buildTreeScope(treeCollection, node, allNodes, callback) {
 			throw new Error("Tree node not found by id: " + node.parentId);
 		}
 
-		getTreeNodesByParents(treeCollection, parent, function(err, treeNodes) {
+		getTreeNodesByParents(treeCollection, [parent], function(err, treeNodes) {
 			if (err) {
 				return callback(err);
-			}
-			
-			if (!Array.isArray(allNodes)) {
-				allNodes = [allNodes];
 			}
 			var nodes = allNodes.concat(treeNodes);
 			buildTreeScope(treeCollection, parent, nodes, callback);
@@ -290,7 +291,7 @@ function feedRootNodes(treeCollection, callback) {
 				return callback(err);
 			}
 
-			var topNodes = connectChildrenToParent(treeNodes,
+			var topNodes = processBuildTree(treeNodes,
 					transformToIdsSet(rootNodes));
 			callback(null, topNodes);
 		});
@@ -308,12 +309,12 @@ function feedChildNodes(treeCollection, nodeId, callback) {
 			throw new Error("Tree node not found by id: " + nodeId);
 		}
 		
-		getTreeNodesByParents(treeCollection, node, function(err, treeNodes) {
+		getTreeNodesByParents(treeCollection, [node], function(err, treeNodes) {
 			if (err) {
 				return callback(err);
 			}
 
-			var topNodes = connectChildrenToParent(treeNodes,
+			var topNodes = processBuildTree(treeNodes,
 					transformToIdsSet(node));
 			callback(null, topNodes);
 		});
@@ -321,12 +322,9 @@ function feedChildNodes(treeCollection, nodeId, callback) {
 }
 
 /**
- * Поднимается вверх по родителям указанного узла 
- * и для каждого найденного родителя получить несколько вложенных узлов деревьев.
- * Также получаются вложенные узлы и для самого указанного узла. 
- * @param treeCollection
- * @param nodeId
- * @param callback
+ * Up to the all parents for specified node and build tree for each parent. Also
+ * add to the tree of the all roots nodes. Id is need for recover tree node
+ * information. Fore example request to open any tree node
  */
 function feedTreeScopeNodes(treeCollection, nodeId, callback) {
 	treeCollection.findOne({
@@ -336,18 +334,18 @@ function feedTreeScopeNodes(treeCollection, nodeId, callback) {
 			return callback(err);
 		}
 		
-		getTreeNodesByParents(treeCollection, node, function(err, treeNodes) {
+		getTreeNodesByParents(treeCollection, [node], function(err, treeNodes) {
 			if (err) {
 				return callback(err);
 			}
-			// построение дерева для всех родителей
+			// build tree for all parents
 			buildTreeScope(treeCollection, node, treeNodes, function(
 					err, allNodes, topNode) {
 				if (err) {
 					return callback(err);
 				}
 				
-				// дополнительно получаем root узлы с детьми
+				// find roots nodes for including to the results 
 				findChildrenByParentIds(treeCollection, null, function(err, rootNodes) {
 					if (err) {
 						return callback(err);
@@ -361,12 +359,11 @@ function feedTreeScopeNodes(treeCollection, nodeId, callback) {
 						allNodes = allNodes.concat(treeNodes);
 						var normNodes = normolizeTreeNodes(allNodes);
 
-						var topNodes = connectChildrenToParent(normNodes,
+						var topNodes = processBuildTree(normNodes,
 								transformToIdsSet(rootNodes));
 						callback(null, topNodes);
 					});
 				});
-				
 			});
 		});
 	});
