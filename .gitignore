@@ -6,6 +6,7 @@ lib-cov
 *.out
 *.pid
 *.gz
+*.md.html
 
 #Sublime
 Flo.sublime-workspace
