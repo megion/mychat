@@ -1,3 +1,0 @@
-[submodule "public/js/vendor/treejs"]
-	path = public/js/vendor/treejs
-	url = git@github.com:megion/treejs.git
