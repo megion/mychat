@@ -1,0 +1,3 @@
+[submodule "public/js/vendor/tabaga"]
+	path = public/js/vendor/tabaga
+	url = git@github.com:megion/tabaga.git
