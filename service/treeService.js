@@ -306,7 +306,7 @@ function feedChildNodes(treeCollection, nodeId, callback) {
 		}
 		
 		if (!node) {
-			throw new Error("Tree node not found by id: " + nodeId);
+			return callback(new Error("Failed feed child nodes. Tree node not found by id: " + nodeId));
 		}
 		
 		getTreeNodesByParents(treeCollection, [node], function(err, treeNodes) {
@@ -332,6 +332,10 @@ function feedTreeScopeNodes(treeCollection, nodeId, callback) {
 	}, function(err, node) {
 		if (err) {
 			return callback(err);
+		}
+		
+		if (!node) {
+			return callback(new Error("Failed feed tree scope nodes. Tree node not found by id: " + nodeId));
 		}
 		
 		getTreeNodesByParents(treeCollection, [node], function(err, treeNodes) {
