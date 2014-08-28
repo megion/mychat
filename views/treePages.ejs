@@ -15,26 +15,30 @@
 			feedChildNodesUrl: "pages/page",
 			feedTreeScopeNodesUrl: "pages/pageTreeScope"
 		},
-	    enableDragAndDrop: true,
 	    onStartFeedChildNodes: function(nodeLi) {
 	    	console.log("Start loading child");
 	    },
 		onSuccessFeedChildNodes: function(nodeLi) {
 	    	console.log("Success loading child");
 	    },
-		onStartFeedTreeScopeNodes: function(nodeLi) {
+		onStartFeedTreeScopeNodes: function(nodeId) {
 	    	console.log("Start loading tree scope");
 	    },
 		onSuccessFeedTreeScopeNodes: function(nodeLi) {
 	    	console.log("Success loading tree scope");
+	    },
+	    
+	    dragAndDrop: {
+	    	//scrollContainer: null,
+	    	disableDefaultCallCompleteAccept: true,
+	    	
+	    	onAcceptDragObject: function(dropTarget, dragObject, state) {
+		    	console.log("DropTarget: " + dropTarget + " accept DragObject: " + dragObject + " state: " + state);
+		    	dropTarget.completeAccept(dragObject);
+		    }
 	    }
-	    //dragAndDropScrollContainer: null
 	}
 	
 	jQuery("#treePages").createTreeControl(config, treeObj);
 	
-	/*var treeControl = new tabaga.TreeControl(document
-			.getElementById("treePages"), "pages/page", "pages/pageTreeScope",
-			true, treeObj);
-	treeControl.init();*/
 </script>
