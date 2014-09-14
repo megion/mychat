@@ -1,15 +1,27 @@
 
 <% layout('layout/page') -%>
-<% block('title', 'Привет ≥︺‿︺≤'); -%>
+<% block('title', 'Hello'); -%>
 
 <!-- tree -->
-<div style="border: 1px solid gray; height: 400px; overflow: auto;">
+<div id="parentTreePages" style="border: 1px solid gray; height: 400px; overflow: auto;">
 	<ul id="treePages" class="filetree treeview">
 	</ul>
 </div>
 
 <script type="text/javascript">
 	var treeObj =<%-JSON.stringify(treeJson)%>;
+	function PageDropTarget(nodeSpan) {
+		tabaga.DropTarget.apply(this, arguments);
+    }
+	
+	// наследование таким образом не работает в IE8
+	PageDropTarget.prototype = Object.create(tabaga.DropTarget.prototype);
+	// переопределить accept
+	PageDropTarget.prototype.accept = function(dragObject) {
+		console.log("DropTarget: " + this + " accept DragObject: " + dragObject + " state: " + this.state);
+		tabaga.DropTarget.prototype.accept.apply(this, arguments);  
+	};
+	
 	var config = {
 		urls: {
 			feedChildNodesUrl: "pages/page",
@@ -27,18 +39,12 @@
 		onSuccessFeedTreeScopeNodes: function(nodeLi) {
 	    	console.log("Success loading tree scope");
 	    },
-	    
 	    dragAndDrop: {
-	    	//scrollContainer: null,
-	    	disableDefaultCallCompleteAccept: true,
-	    	
-	    	onAcceptDragObject: function(dropTarget, dragObject, state) {
-		    	console.log("DropTarget: " + dropTarget + " accept DragObject: " + dragObject + " state: " + state);
-		    	dropTarget.completeAccept(dragObject);
-		    }
+	    	scrollContainer: jQuery("#parentTreePages")[0],
+	    	DropTargetConstructor: PageDropTarget
 	    }
 	}
 	
-	jQuery("#treePages").createTreeControl(config, treeObj);
+	jQuery("#treePages").createTreeControl("1", config, treeObj);
 	
 </script>
