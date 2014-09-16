@@ -4,12 +4,29 @@
 
 <!-- tree -->
 <div id="parentTreePages" style="border: 1px solid gray; height: 400px; overflow: auto;">
-	<ul id="treePages" class="filetree treeview">
+
+    <table style="width: 100%" border="1">
+    <tbody>
+    <tr>
+    <td width="50%" valign="top">
+    <ul id="treePages" class="filetree treeview">
 	</ul>
+    </td>
+    
+    <td width="50%" valign="top">
+    <ul id="treePages2" class="filetree treeview">
+	</ul>
+    </td>
+    
+    </tr>
+    </tbody>
+    </table>
+	
 </div>
 
 <script type="text/javascript">
 	var treeObj =<%-JSON.stringify(treeJson)%>;
+	var treeObj2 =<%-JSON.stringify(treeJson)%>;
 	function PageDropTarget(nodeSpan) {
 		tabaga.DropTarget.apply(this, arguments);
     }
@@ -46,5 +63,6 @@
 	}
 	
 	jQuery("#treePages").createTreeControl("1", config, treeObj);
+	jQuery("#treePages2").createTreeControl("2", config, treeObj2);
 	
 </script>
