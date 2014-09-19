@@ -4,8 +4,6 @@
   <meta charset="utf-8"/>
   <title><%=blocks.title%></title>
   <link rel='stylesheet' href='/css/style.css' />
-  <link rel='stylesheet' href='/css/general.css' />
-  <link rel='stylesheet' href='/css/navigation-horizontal.css' />
   <link rel='stylesheet' href='/js/vendor/tabaga/dragAndDrop/dragAndDrop.css' />
   <link rel='stylesheet' href='/js/vendor/tabaga/tree/treeControl.css' />
   
@@ -19,21 +17,28 @@
   <script type="text/javascript" src="/js/vendor/tabaga/dragAndDrop/DragObject.js"></script>
   <script type="text/javascript" src="/js/vendor/tabaga/dragAndDrop/DropTarget.js"></script>
   
+  <script type="text/javascript" src="/js/megion.js"></script>
+  
 </head>
 <body>
 <header>
   <%-blocks.header%>
 </header>
-<section class="container">
 
-  <%-partial('../partials/topNavigation')%>
+<div id="loadingStatus" class="loadingStatusLabel" style="display: none">
+	<div>Loading...</div>
+</div>
 
-  <h1><%=blocks.title%></h1>
+<%-partial('../partials/topNavigation')%>
 
+<h1><%=blocks.title%></h1>
+
+<div>
   <%-body -%>
-</section>
-<footer>
+</div>
+
+<div>
   <%-blocks.footer%>
-</footer>
+</div>
 </body>
 </html>

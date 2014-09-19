@@ -1,10 +1,31 @@
 body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+	font-family: Cantarell, 'Droid Sans', Ubuntu, 'DejaVu Sans', Arial,
+		sans-serif;
+	font-size: 0.8em;
+	padding: 0 0 40px;
+	margin: 0;
+	padding: 0;
 }
 
 a {
   color: #00B7FF;
   cursor: pointer;
   text-decoration: underline;
+}
+
+.loadingStatusLabel {
+    background-color: #ffffc8;
+    border-color: #ffffc8;
+    border-radius: 0 0 4px 4px;
+    border-style: none solid solid solid;
+    border-width: 0 2px 2px 2px;
+    color: #000000;
+    font-family: arial,sans-serif;
+    font-weight: bold;
+    left: 50%;
+    margin-left: -38px;
+    top: 0;
+    padding: 3px;
+    position: absolute;
+    z-index: 1100;
 }

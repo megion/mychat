@@ -39,22 +39,33 @@
 		tabaga.DropTarget.prototype.accept.apply(this, arguments);  
 	};
 	
+	// переопределить TreeControl
+	function PageTreeControl() {
+		tabaga.TreeControl.apply(this, arguments);
+    }
+	PageTreeControl.prototype = Object.create(tabaga.TreeControl.prototype);
+	PageTreeControl.prototype.onSelectTreeNode = function(event) {
+		console.log("select node: " + this);
+		tabaga.TreeControl.prototype.onSelectTreeNode.apply(this, arguments);  
+	}
+	
 	var config = {
+		TreeControlConstructor: PageTreeControl,
 		urls: {
 			feedChildNodesUrl: "pages/page",
 			feedTreeScopeNodesUrl: "pages/pageTreeScope"
 		},
 	    onStartFeedChildNodes: function(nodeLi) {
-	    	console.log("Start loading child");
+	    	megion.showLoadingStatus(true);
 	    },
 		onSuccessFeedChildNodes: function(nodeLi) {
-	    	console.log("Success loading child");
+			megion.showLoadingStatus(false);
 	    },
 		onStartFeedTreeScopeNodes: function(nodeId) {
-	    	console.log("Start loading tree scope");
+			megion.showLoadingStatus(true);
 	    },
 		onSuccessFeedTreeScopeNodes: function(nodeLi) {
-	    	console.log("Success loading tree scope");
+			megion.showLoadingStatus(false);
 	    },
 	    dragAndDrop: {
 	    	scrollContainer: jQuery("#parentTreePages")[0],
