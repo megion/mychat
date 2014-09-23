@@ -51,21 +51,34 @@
 	
 	var config = {
 		TreeControlConstructor: PageTreeControl,
-		urls: {
-			feedChildNodesUrl: "pages/page",
-			feedTreeScopeNodesUrl: "pages/pageTreeScope"
-		},
-	    onStartFeedChildNodes: function(nodeLi) {
-	    	megion.showLoadingStatus(true);
-	    },
-		onSuccessFeedChildNodes: function(nodeLi) {
-			megion.showLoadingStatus(false);
-	    },
-		onStartFeedTreeScopeNodes: function(nodeId) {
+		loadTreeScopeNodes: function(nodeId, setClosed, tree, successCallback) {
 			megion.showLoadingStatus(true);
+			$.ajax({
+				url : "pages/pageTreeScope",
+				dataType : "json",
+				data : {
+					"nodeId" : nodeId
+				},
+				success : function(loadedData) {
+					successCallback(nodeId, setClosed, loadedData);
+					megion.showLoadingStatus(false);
+				}
+			});
 	    },
-		onSuccessFeedTreeScopeNodes: function(nodeLi) {
-			megion.showLoadingStatus(false);
+	    loadChildNodes: function(nodeId, tree, successCallback) {
+			megion.showLoadingStatus(true);
+			$.ajax({
+				url : "pages/page",
+				dataType : "json",
+				data : {
+					"nodeId" : nodeId
+				},
+				success : function(loadedData) {
+					// loaded data is array
+					successCallback(nodeId, loadedData[0]);
+					megion.showLoadingStatus(false);
+				}
+			});
 	    },
 	    dragAndDrop: {
 	    	scrollContainer: jQuery("#parentTreePages")[0],
