@@ -3,10 +3,10 @@
 <% block('title', 'Hello'); -%>
 
 <div class="menuPanel">
-	<button type="button" class="btn">
+	<button type="button" class="btn" onclick="(jQuery('#treePages')[0]).treeControl.makeAllDraggable();">
 		<i class="icon-delete"></i>
 	</button>
-	<button type="button" class="btn">
+	<button type="button" class="btn" onclick="(jQuery('#treePages')[0]).treeControl.makeAllUnDraggable();">
 		<i class="icon-copy"></i>
 	</button>
 	<button type="button" class="btn">
@@ -56,9 +56,9 @@
 		tabaga.TreeControl.apply(this, arguments);
     }
 	PageTreeControl.prototype = Object.create(tabaga.TreeControl.prototype);
-	PageTreeControl.prototype.onSelectTreeNode = function(event) {
+	PageTreeControl.prototype.onClickTreeNode = function(event) {
 		console.log("select node: " + this);
-		tabaga.TreeControl.prototype.onSelectTreeNode.apply(this, arguments);  
+		tabaga.TreeControl.prototype.onClickTreeNode.apply(this, arguments);  
 	}
 	
 	var config = {
