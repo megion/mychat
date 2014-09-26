@@ -66,11 +66,25 @@ a {
 }
 
 .icon-move:before {
-    content: "?";
+    content: "⬍";
     font-size: 21px;
     font-style: normal;
-    margin-left: -3px;
+    margin-left: -2px;
 }
+.icon-copy:before {
+    content: "⎘";
+    font-size: 21px;
+    font-style: normal;
+    margin-left: -2px;
+}
+.icon-delete:before {
+    content: "✘";
+    font-size: 21px;
+    font-style: normal;
+    margin-left: -2px;
+}
+
+
 
 [class^="icon-"], [class*=" icon-"] {
     display: inline-block;

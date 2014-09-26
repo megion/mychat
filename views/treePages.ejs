@@ -3,13 +3,13 @@
 <% block('title', 'Hello'); -%>
 
 <div class="menuPanel">
-	<button type="button" class="btn" onclick="(jQuery('#treePages')[0]).treeControl.makeAllDraggable();">
+	<button type="button" class="btn" >
 		<i class="icon-delete"></i>
 	</button>
-	<button type="button" class="btn" onclick="(jQuery('#treePages')[0]).treeControl.makeAllUnDraggable();">
+	<button type="button" class="btn" onclick="(jQuery('#treePages')[0]).treeControl.makeAllDraggable();">
 		<i class="icon-copy"></i>
 	</button>
-	<button type="button" class="btn">
+	<button type="button" class="btn" onclick="(jQuery('#treePages')[0]).treeControl.makeAllDraggable();">
 		<i class="icon-move"></i>
 	</button>
 </div>
@@ -48,7 +48,9 @@
 	// переопределить accept
 	PageDropTarget.prototype.accept = function(dragObject) {
 		console.log("DropTarget: " + this + " accept DragObject: " + dragObject + " state: " + this.state);
-		tabaga.DropTarget.prototype.accept.apply(this, arguments);  
+		tabaga.DropTarget.prototype.accept.apply(this, arguments);
+		
+		(jQuery('#treePages')[0]).treeControl.makeAllUnDraggable();
 	};
 	
 	// переопределить TreeControl
@@ -95,6 +97,10 @@
 	    dragAndDrop: {
 	    	scrollContainer: jQuery("#parentTreePages")[0],
 	    	DropTargetConstructor: PageDropTarget
+	    },
+	    onNodeContextMenu: function(event) {
+	    	console.log("Open node context menu");
+	    	return false;
 	    }
 	}
 	
