@@ -44,6 +44,8 @@
     }
 	
 	// наследование таким образом не работает в IE8
+	// (можно использовать собственную универсальную функцию)
+	// переопределим tabaga.DropTarget
 	PageDropTarget.prototype = Object.create(tabaga.DropTarget.prototype);
 	// переопределить accept
 	PageDropTarget.prototype.accept = function(dragObject) {
@@ -58,10 +60,19 @@
 		tabaga.TreeControl.apply(this, arguments);
     }
 	PageTreeControl.prototype = Object.create(tabaga.TreeControl.prototype);
-	PageTreeControl.prototype.onClickTreeNode = function(event) {
-		console.log("select node: " + this);
-		tabaga.TreeControl.prototype.onClickTreeNode.apply(this, arguments);  
-	}
+	PageTreeControl.prototype.appendNewNode = function(parentUl, newNode) {
+		var newNodeLi = tabaga.TreeControl.prototype.appendNewNode.apply(this, arguments);
+		newNodeLi.oncontextmenu = function(event) {
+	    	console.log("Open node context menu: " + this);
+	    	tabaga.stopEventPropagation(event);
+	    	return false;
+	    }
+		newNodeLi.onclick = function(event) {
+	    	console.log("Onclick node: " + this);
+	    	// call default onclick
+	    	return tabaga.onClickTreeControlNodeLi.apply(this, arguments);
+	    }
+	};
 	
 	var config = {
 		TreeControlConstructor: PageTreeControl,
@@ -97,10 +108,6 @@
 	    dragAndDrop: {
 	    	scrollContainer: jQuery("#parentTreePages")[0],
 	    	DropTargetConstructor: PageDropTarget
-	    },
-	    onNodeContextMenu: function(event) {
-	    	console.log("Open node context menu");
-	    	return false;
 	    }
 	}
 	
