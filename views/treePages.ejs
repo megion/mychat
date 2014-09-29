@@ -62,11 +62,13 @@
 	PageTreeControl.prototype = Object.create(tabaga.TreeControl.prototype);
 	PageTreeControl.prototype.appendNewNode = function(parentUl, newNode) {
 		var newNodeLi = tabaga.TreeControl.prototype.appendNewNode.apply(this, arguments);
-		newNodeLi.oncontextmenu = function(event) {
-	    	console.log("Open node context menu: " + this);
-	    	tabaga.stopEventPropagation(event);
-	    	return false;
-	    }
+		
+		tabaga.contextmenuMaster.makeContextable(newNodeLi);
+		var menu = new tabaga.ContextMenu(newNodeLi, function(container) {
+			console.log("Create menu under container: " + container);
+		});
+		
+		
 		newNodeLi.onclick = function(event) {
 	    	console.log("Onclick node: " + this);
 	    	// call default onclick
