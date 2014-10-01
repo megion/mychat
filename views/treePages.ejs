@@ -6,10 +6,10 @@
 	<button type="button" class="btn" >
 		<i class="icon-delete"></i>
 	</button>
-	<button type="button" class="btn" onclick="(jQuery('#treePages')[0]).treeControl.makeAllDraggable();">
+	<button type="button" class="btn" onclick="">
 		<i class="icon-copy"></i>
 	</button>
-	<button type="button" class="btn" onclick="(jQuery('#treePages')[0]).treeControl.makeAllDraggable();">
+	<button type="button" class="btn" onclick="">
 		<i class="icon-move"></i>
 	</button>
 </div>
@@ -39,7 +39,7 @@
 <script type="text/javascript">
 	var treeObj =<%-JSON.stringify(treeJson)%>;
 	var treeObj2 =<%-JSON.stringify(treeJson)%>;
-	function PageDropTarget(nodeSpan) {
+	function PageDropTarget(element) {
 		tabaga.DropTarget.apply(this, arguments);
     }
 	
@@ -51,8 +51,6 @@
 	PageDropTarget.prototype.accept = function(dragObject) {
 		console.log("DropTarget: " + this + " accept DragObject: " + dragObject + " state: " + this.state);
 		tabaga.DropTarget.prototype.accept.apply(this, arguments);
-		
-		(jQuery('#treePages')[0]).treeControl.makeAllUnDraggable();
 	};
 	
 	// переопределить TreeControl
@@ -63,22 +61,50 @@
 	function PageNodeContextMenu() {
 		tabaga.PopupMenu.apply(this, arguments);
     }
+	
+	function createSimpleTextContextMenu(menuItems) {
+		var ulContainer = document.createElement("ul");
+		ulContainer.className = "simpleContextMenu";
+		for (var i = 0; i < menuItems.length; i++) {
+			var menuItem = menuItems[i];
+			
+			var itemLi = document.createElement("li");
+			ulContainer.appendChild(itemLi);
+			var itemSpan = document.createElement("span")
+			itemSpan.innerHTML = menuItem.title;
+			itemLi.appendChild(itemSpan);
+			
+			itemLi.onclick = menuItem.clickAction;
+		}
+		return ulContainer;
+	} 
+	
 	PageNodeContextMenu.prototype = Object.create(tabaga.PopupMenu.prototype);
 	PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
+		
+		
 		console.log("Create menu under container: " + containerMenu);
 		
-		var ulContainer = document.createElement("ul");
+		
+		var nodeLi = this.element;
+		var treeControl = nodeLi.treeControl;
+		treeControl.clickNode(nodeLi);
+		
+		var ulContainer = createSimpleTextContextMenu([{title: "Delete", onclickAction: function(e) {}},
+		                             {title: "Move", onclickAction: function(e) {}},
+		                             {title: "Copy", onclickAction: function(e) {}}]);
+		
+		
 		
 		//ulContainer.setAttribute("style", "display: none");
 		containerMenu.appendChild(ulContainer);
 		
-		var moveLi = document.createElement("li");
-		ulContainer.appendChild(moveLi);
-		var nodeSpan = document.createElement("span")
-		nodeSpan.innerHTML = "Переместить";
-		moveLi.appendChild(nodeSpan);
+		
 		
 	};
+	
+	
+	
 	
 	PageTreeControl.prototype = Object.create(tabaga.TreeControl.prototype);
 	PageTreeControl.prototype.appendNewNode = function(parentUl, newNode) {
@@ -90,8 +116,13 @@
 		newNodeLi.onclick = function(event) {
 	    	console.log("Onclick node: " + this);
 	    	// call default onclick
-	    	return tabaga.onClickTreeControlNodeLi.apply(this, arguments);
+	    	return tabaga.onClickTreeNode.apply(this, arguments);
 	    }
+		
+        var dragObject = new tabaga.DragObject(newNodeLi.nodeSpan);
+        dragObject.setScrollManager(new tabaga.DragScrollManager(jQuery("#parentTreePages")[0]));
+		new PageDropTarget(newNodeLi.nodeSpan);
+		tabaga.dragMaster.makeDraggable(newNodeLi.nodeSpan);
 	};
 	
 	var config = {
@@ -132,6 +163,7 @@
 	}
 	
 	jQuery("#treePages").createTreeControl("1", config, treeObj);
-	jQuery("#treePages2").createTreeControl("2", config, treeObj2);
+	var tree2 = jQuery("#treePages2").createTreeControl("2", config, treeObj2);
+	//tabaga.enableHistoryControl(tree2, false);
 	
 </script>

@@ -101,3 +101,16 @@ a {
 	padding: 6px 10px;
 }
 
+.contextMenuContainer {
+	z-index: 100;
+	position: absolute;
+}
+
+ul.simpleContextMenu {
+	list-style: none outside none;
+	background-color: #ffff;
+    border: 1px solid #969696;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.4);
+}
+
+
