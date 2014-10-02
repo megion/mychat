@@ -15,24 +15,15 @@
 </div>
 
 <!-- tree -->
-<div id="parentTreePages" style="border: 1px solid gray; height: 400px; overflow: auto;">
-
-    <table style="width: 100%" border="1">
-    <tbody>
-    <tr>
-    <td width="50%" valign="top">
-    <ul id="treePages" class="filetree treeview">
-	</ul>
-    </td>
+<div id="parentTreePages" style="border: 1px solid gray; border-width: 1px 0 1px 0; height: 400px; overflow: auto;">
     
-    <td width="50%" valign="top">
+    <div style="float: left; width: 50%; border-right: 1px solid gray;">
+    <ul id="treePages" class="filetree treeview"></ul>
+    </div>
+    <div style="float: left; width: 40%;">
     <ul id="treePages2" class="filetree treeview">
 	</ul>
-    </td>
-    
-    </tr>
-    </tbody>
-    </table>
+    </div>
 	
 </div>
 
@@ -111,7 +102,7 @@
 		var newNodeLi = tabaga.TreeControl.prototype.appendNewNode.apply(this, arguments);
 		
 		tabaga.popupMaster.makeContextable(newNodeLi);
-		var menu = new PageNodeContextMenu(newNodeLi);
+		var menu = new PageNodeContextMenu(newNodeLi, jQuery("#parentTreePages")[0]);
 		
 		newNodeLi.onclick = function(event) {
 	    	console.log("Onclick node: " + this);

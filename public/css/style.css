@@ -108,9 +108,10 @@ a {
 
 ul.simpleContextMenu {
 	list-style: none outside none;
-	background-color: #ffff;
+	background-color: #ffffff;
     border: 1px solid #969696;
     box-shadow: 0 5px 10px rgba(0, 0, 0, 0.4);
+    
 }
 
 
