@@ -72,30 +72,19 @@
 	
 	PageNodeContextMenu.prototype = Object.create(tabaga.PopupMenu.prototype);
 	PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
-		
-		
 		console.log("Create menu under container: " + containerMenu);
-		
 		
 		var nodeLi = this.element;
 		var treeControl = nodeLi.treeControl;
-		treeControl.clickNode(nodeLi);
+		treeControl.setSelectionTreeNode(nodeLi);
 		
 		var ulContainer = createSimpleTextContextMenu([{title: "Delete", onclickAction: function(e) {}},
 		                             {title: "Move", onclickAction: function(e) {}},
 		                             {title: "Copy", onclickAction: function(e) {}}]);
 		
-		
-		
 		//ulContainer.setAttribute("style", "display: none");
 		containerMenu.appendChild(ulContainer);
-		
-		
-		
 	};
-	
-	
-	
 	
 	PageTreeControl.prototype = Object.create(tabaga.TreeControl.prototype);
 	PageTreeControl.prototype.appendNewNode = function(parentUl, newNode) {
