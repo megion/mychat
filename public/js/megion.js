@@ -17,3 +17,24 @@ megion.showLoadingStatus = function(visible) {
 		
 	}
 };
+
+megion.createSimpleTextContextMenu = function(menuItems) {
+	var ulContainer = document.createElement("ul");
+	ulContainer.className = "simpleContextMenu";
+	for (var i = 0; i < menuItems.length; i++) {
+		var menuItem = menuItems[i];
+		
+		var itemLi = document.createElement("li");
+		ulContainer.appendChild(itemLi);
+		
+		var itemA = document.createElement("a");
+		itemLi.appendChild(itemA);
+		
+		var itemSpan = document.createElement("span")
+		itemSpan.innerHTML = menuItem.title;
+		itemA.appendChild(itemSpan);
+		
+		itemA.onclick = menuItem.onclick;
+	}
+	return ulContainer;
+};
