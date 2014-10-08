@@ -11,7 +11,7 @@ PageDropTarget.prototype.accept = function(dragObject) {
 	console.log("DropTarget: " + this + " accept DragObject: " + dragObject
 			+ " state: " + this.state);
 	tabaga.DropTarget.prototype.accept.apply(this, arguments);
-	tabaga.dragMaster.makeUnDraggable(nl.nodeSpan);
+	//tabaga.dragMaster.makeUnDraggable(nl.nodeSpan);
 };
 
 // переопределить TreeControl
@@ -46,7 +46,7 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 			
 			//var nodeLi = this;
 			console.log("nodeLi " + nodeLi);
-			tabaga.dragMaster.makeDraggable(nodeLi.nodeSpan);
+			//tabaga.dragMaster.makeDraggable(nodeLi.nodeSpan);
 			//treeControl.processAllNodes(function(nl){
 				
 			//});
@@ -59,6 +59,11 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 			//tabaga.fireEvent(nodeLi.nodeSpan, "mousemove");
 			
 			tabaga.popupMaster.closeContext();
+			
+			e = tabaga.fixEvent(e);
+			tabaga.dragMaster.emulateDragStart(e.pageX, e.pageY, nodeLi.nodeSpan);
+			
+			return false;
 		}
 	} ]);
 	containerMenu.appendChild(ulContainer);
