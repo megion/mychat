@@ -86,7 +86,8 @@ PageTreeControl.prototype.appendNewNode = function(parentUl, newNode) {
 
 	
 	new PageDropTarget(newNodeLi.nodeSpan);
-	//tabaga.dragMaster.makeDraggable(newNodeLi.nodeSpan);
+	tabaga.dragMaster.makeDraggable(newNodeLi.nodeSpan);
+	new tabaga.DragObject(newNodeLi.nodeSpan);
 };
 
 PageTreeControl.prototype.loadChildNodes = function(nodeLi) {
