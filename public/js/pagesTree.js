@@ -56,8 +56,16 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 						+ " state: " + dropTarget.state);
 			}
 			
+			var onDragFailFn = dragObject.onDragFail;
+			dragObject.onDragFail = function() {
+				// call super
+				onDragFailFn.apply(this, arguments);
+				window.disableClickOnTreeNode = false;
+			}
+			
 			tabaga.dragMaster.emulateDragStart(nodeLi.nodeSpan, {x: 0, y: -15});
 			window.disableClickOnTreeNode = true;
+			console.log("Onclick to copy: " + window.disableClickOnTreeNode);
 			return false;
 		}
 	} ]);
@@ -74,12 +82,14 @@ PageTreeControl.prototype.appendNewNode = function(parentUl, newNode) {
 	var menu = new PageNodeContextMenu(newNodeLi/*, jQuery("#parentTreePages")[0]*/);
 
 	newNodeLi.onclick = function(event) {
-		console.log("Onclick node: " + this);
+		tabaga.stopEventPropagation(event);
+		console.log("Onclick node: " + window.disableClickOnTreeNode);
 		if (window.disableClickOnTreeNode) {
 			window.disableClickOnTreeNode = false;
 			return false;
 		} else {
 		    // call default onclick
+			console.log("Onclick node: " + this);
 		    return tabaga.onClickTreeNode.apply(this, arguments);
 		}
 	}

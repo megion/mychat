@@ -145,3 +145,20 @@ ul.simpleContextMenu>li>a:hover, ul.simpleContextMenu>li>a:focus {
 	background: none repeat scroll 0 0 rgba(255, 193, 0, 0.37);
 }
 
+/* stretch height */
+body.stretchHeight {
+	height: 99%;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    min-width: 748px;
+    margin: 0;
+	padding: 0;
+}
+
+.stretchHeight .mainCenter {
+	height: 60%;
+    position: relative;
+    top: 0;
+}
