@@ -8,10 +8,9 @@ function PageDropTarget(element) {
 PageDropTarget.prototype = Object.create(tabaga.DropTarget.prototype);
 // переопределить accept
 PageDropTarget.prototype.accept = function(dragObject) {
-	console.log("DropTarget: " + this + " accept DragObject: " + dragObject
-			+ " state: " + this.state);
+	//console.log("DropTarget: " + this + " accept DragObject: " + dragObject
+			//+ " state: " + this.state);
 	tabaga.DropTarget.prototype.accept.apply(this, arguments);
-	//tabaga.dragMaster.makeUnDraggable(nl.nodeSpan);
 };
 
 // переопределить TreeControl
@@ -43,26 +42,22 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 		title : "Copy",
 		onclick : function(e) {
 			tabaga.stopEventPropagation(e);
-			
-			//var nodeLi = this;
-			console.log("nodeLi " + nodeLi);
-			//tabaga.dragMaster.makeDraggable(nodeLi.nodeSpan);
-			//treeControl.processAllNodes(function(nl){
-				
-			//});
+			tabaga.popupMaster.closeContext();
 			
 			var dragObject = new tabaga.DragObject(nodeLi.nodeSpan);
 			dragObject.setScrollManager(new tabaga.DragScrollManager(
-					jQuery("#parentTreePages")[0]));
+			jQuery("#parentTreePages")[0]));
 			
-			//tabaga.fireEvent(nodeLi.nodeSpan, "mousedown");
-			//tabaga.fireEvent(nodeLi.nodeSpan, "mousemove");
+			var onDragSuccessFn = dragObject.onDragSuccess;
+			dragObject.onDragSuccess = function(dropTarget) {
+				// call super
+				onDragSuccessFn.apply(this, arguments);
+				console.log("Copy: DropTarget: " + dropTarget + " accept DragObject: " + this
+						+ " state: " + dropTarget.state);
+			}
 			
-			tabaga.popupMaster.closeContext();
-			
-			e = tabaga.fixEvent(e);
-			tabaga.dragMaster.emulateDragStart(e.pageX, e.pageY, nodeLi.nodeSpan);
-			
+			tabaga.dragMaster.emulateDragStart(nodeLi.nodeSpan, {x: 0, y: -15});
+			window.disableClickOnTreeNode = true;
 			return false;
 		}
 	} ]);
@@ -80,14 +75,20 @@ PageTreeControl.prototype.appendNewNode = function(parentUl, newNode) {
 
 	newNodeLi.onclick = function(event) {
 		console.log("Onclick node: " + this);
-		// call default onclick
-		return tabaga.onClickTreeNode.apply(this, arguments);
+		if (window.disableClickOnTreeNode) {
+			window.disableClickOnTreeNode = false;
+			return false;
+		} else {
+		    // call default onclick
+		    return tabaga.onClickTreeNode.apply(this, arguments);
+		}
 	}
 
-	
 	new PageDropTarget(newNodeLi.nodeSpan);
-	tabaga.dragMaster.makeDraggable(newNodeLi.nodeSpan);
-	new tabaga.DragObject(newNodeLi.nodeSpan);
+	
+	
+	//tabaga.dragMaster.makeDraggable(newNodeLi.nodeSpan);
+	
 };
 
 PageTreeControl.prototype.loadChildNodes = function(nodeLi) {
