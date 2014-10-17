@@ -54,6 +54,7 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 				onDragSuccessFn.apply(this, arguments);
 				console.log("Copy: DropTarget: " + dropTarget + " accept DragObject: " + this
 						+ " state: " + dropTarget.state);
+				// copy ...  
 			}
 			
 			var onDragFailFn = dragObject.onDragFail;

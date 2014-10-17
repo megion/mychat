@@ -373,6 +373,10 @@ function feedTreeScopeNodes(treeCollection, nodeId, callback) {
 	});
 }
 
+/* web functions */
 exports.feedRootNodes = feedRootNodes;
 exports.feedChildNodes = feedChildNodes;
 exports.feedTreeScopeNodes = feedTreeScopeNodes;
+
+/* simple functions */
+exports.findChildrenByParentIds = findChildrenByParentIds;
