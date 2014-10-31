@@ -24,8 +24,6 @@ function PageNodeContextMenu() {
 
 PageNodeContextMenu.prototype = Object.create(tabaga.PopupMenu.prototype);
 PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
-	console.log("Create menu under container: " + containerMenu);
-
 	var nodeLi = this.element;
 	var treeControl = nodeLi.treeControl;
 	treeControl.setSelectionTreeNode(nodeLi);
@@ -66,7 +64,6 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 			
 			tabaga.dragMaster.emulateDragStart(nodeLi.nodeSpan, {x: 0, y: -15});
 			window.disableClickOnTreeNode = true;
-			console.log("Onclick to copy: " + window.disableClickOnTreeNode);
 			return false;
 		}
 	} ]);
@@ -84,22 +81,17 @@ PageTreeControl.prototype.appendNewNode = function(parentUl, newNode) {
 
 	newNodeLi.onclick = function(event) {
 		tabaga.stopEventPropagation(event);
-		console.log("Onclick node: " + window.disableClickOnTreeNode);
 		if (window.disableClickOnTreeNode) {
 			window.disableClickOnTreeNode = false;
 			return false;
 		} else {
 		    // call default onclick
-			console.log("Onclick node: " + this);
-		    return tabaga.onClickTreeNode.apply(this, arguments);
+		    return tabaga.TreeControl.onClickTreeNode.apply(this, arguments);
 		}
 	}
 
 	new PageDropTarget(newNodeLi.nodeSpan);
-	
-	
 	//tabaga.dragMaster.makeDraggable(newNodeLi.nodeSpan);
-	
 };
 
 PageTreeControl.prototype.loadChildNodes = function(nodeLi) {
@@ -137,7 +129,6 @@ PageTreeControl.prototype.loadTreeScopeNodes = function(nodeId, setClosed) {
 			var nodeLi = nodeModel.nodeLi
 			
 			self.openNode(nodeLi, setClosed);
-			
 			megion.showLoadingStatus(false);
 		}
 	});

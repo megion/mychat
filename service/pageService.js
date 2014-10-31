@@ -42,19 +42,12 @@ function copyTo(srcId, destId, callback) {
 				}
 			}
 			
-			//createPage(name, title, parentId, order, callback)
+			createPage(srcPage.name, srcPage.title, destId, maxOrder+1, callback);
 		});
 		
-	});
-
-	var collection = getCollection();
-	collection.insert(page, function(err, results){
-		if (err) {
-			return callback(err);
-		}
-		callback(null, page);
 	});
 }
 
 exports.createPage = createPage;
+exports.copyTo = copyTo;
 exports.getCollection = getCollection;
