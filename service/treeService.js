@@ -373,6 +373,44 @@ function feedTreeScopeNodes(treeCollection, nodeId, callback) {
 	});
 }
 
+function copyChildren(srcItem, destItem, treeCollection, createTreeItems, callback) {
+	
+}
+
+function copyTo(srcId, destId, treeCollection, createTreeItems, callback) {
+	// 1. Find source object
+	treeCollection.findOne({
+		_id : new ObjectId(srcId)
+	}, function(err, srcObj) {
+		if (err) {
+			return callback(err);
+		}
+		
+		// 2. Find all destination child
+		findChildrenByParentIds(treeCollection, destId, function(err, destChildren) {
+			if (err) {
+				return callback(err);
+			}
+			
+			// find max order
+			var maxOrder = 0;
+			for (var i = 0; i < destChildren.length; i++) {
+				var child = destChildren[i];
+				if (maxOrder < child.order) {
+					maxOrder = child.order;
+				}
+			}
+			
+			// create copy
+			createTreeItems([srcItem], parentId, maxOrder+1, function(err, createdItem) {
+				// 
+			});
+			//createPage(srcPage.name, srcPage.title, destId, maxOrder+1, callback);
+		});
+		
+	});
+}
+
 /* web functions */
 exports.feedRootNodes = feedRootNodes;
 exports.feedChildNodes = feedChildNodes;
