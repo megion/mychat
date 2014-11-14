@@ -19,35 +19,28 @@ function createPage(name, title, parentId, order, callback) {
 	});
 }
 
-function copyTo(srcId, destId, callback) {
+/**
+ * Create copy srcItems in parentId
+ * @param srcItems
+ * @param parentId 
+ * @param order
+ * @param callback
+ */
+function createCopyItems(srcItems, parentId, startOrder, callback) { 
+	var pages = [];
+	for (var i = 0; i < srcItems.length; i++) {
+		var item = srcItems[i];
+		pages.push(new Page(item.name, item.title, parentId, startOrder + i));
+	}
 	var collection = getCollection();
-	
-	collection.findOne({
-		_id : new ObjectId(srcId)
-	}, function(err, srcPage){
+	collection.insert(pages, function(err, results){
 		if (err) {
 			return callback(err);
 		}
-		
-		treeService.findChildrenByParentIds(collection, destId, function(err, destChildren) {
-			if (err) {
-				return callback(err);
-			}
-			
-			var maxOrder = 0;
-			for (var i = 0; i < destChildren.length; i++) {
-				var child = destChildren[i];
-				if (maxOrder < child.order) {
-					maxOrder = child.order;
-				}
-			}
-			
-			createPage(srcPage.name, srcPage.title, destId, maxOrder+1, callback);
-		});
-		
+		callback(null, results);
 	});
 }
 
 exports.createPage = createPage;
-exports.copyTo = copyTo;
+exports.createCopyItems = createCopyItems;
 exports.getCollection = getCollection;

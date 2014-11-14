@@ -36,4 +36,18 @@ router.get('/pageTreeScope', function(req, res, next) {
 	});
 });
 
+router.post('/copyTo', function(req, res, next) {
+	var pageCollection = pageService.getCollection();
+	treeService.copyTo(req.param("srcId"), req.param("destId"), pageCollection, pageService.createCopyItems, function(err) {
+		if (err)
+			return next(err);
+		
+		treeService.feedTreeScopeNodes(pageCollection, req.param("destId"), function(err, treeScopeNodes) {
+			if (err)
+				return next(err);
+			res.json(treeScopeNodes);
+		});
+	});
+});
+
 module.exports = router;

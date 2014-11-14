@@ -373,41 +373,66 @@ function feedTreeScopeNodes(treeCollection, nodeId, callback) {
 	});
 }
 
-function copyChildren(srcItem, destItem, treeCollection, createTreeItems, callback) {
-	
-}
-
-function copyTo(srcId, destId, treeCollection, createTreeItems, callback) {
-	// 1. Find source object
-	treeCollection.findOne({
-		_id : new ObjectId(srcId)
-	}, function(err, srcObj) {
+/**
+ * Copy all children from srcItem to destItem
+ * @param srcItem
+ * @param destItem
+ * @param treeCollection
+ * @param createTreeItems
+ * @param callback
+ */
+function copyChildren(srcItem, destItem, treeCollection, createCopyItems, callback) {
+	// 2. Find all destination child
+	findChildrenByParentIds(treeCollection, srcItem._id, function(err, srcChildren) {
 		if (err) {
 			return callback(err);
 		}
 		
-		// 2. Find all destination child
-		findChildrenByParentIds(treeCollection, destId, function(err, destChildren) {
+		if (srcChildren.length==0) {
+			callback(null);
+		}
+		
+		// create copy of srcChildren
+		createCopyItems(srcChildren, destItem._id, 0, function(err, createdItems) {
+			// recursive copy all children of scrChildren
+			for (var i = 0; i < srcChildren.length; i++) {
+				copyChildren(srcChildren[i], createdItems[i], treeCollection, createCopyItems, callback);
+			}
+		});
+	});
+}
+
+function copyTo(srcId, destId, treeCollection, createCopyItems, callback) {
+	// 1. Find all destination child
+	var destObjId = new ObjectId(destId);
+	findChildrenByParentIds(treeCollection, destObjId, function(err, destChildren) {
+		if (err) {
+			return callback(err);
+		}
+		
+		// find max order
+		var maxOrder = 0;
+		for (var i = 0; i < destChildren.length; i++) {
+			var child = destChildren[i];
+			if (maxOrder < child.order) {
+				maxOrder = child.order;
+			}
+		}
+		maxOrder++;
+		
+		// 1. Find source object
+		treeCollection.findOne({
+			_id : new ObjectId(srcId)
+		}, function(err, srcItem) {
 			if (err) {
 				return callback(err);
 			}
 			
-			// find max order
-			var maxOrder = 0;
-			for (var i = 0; i < destChildren.length; i++) {
-				var child = destChildren[i];
-				if (maxOrder < child.order) {
-					maxOrder = child.order;
-				}
-			}
-			
 			// create copy
-			createTreeItems([srcItem], parentId, maxOrder+1, function(err, createdItem) {
-				// 
+			createCopyItems([srcItem], destObjId, maxOrder, function(err, createdItems) {
+				copyChildren(srcItem, createdItems[0], treeCollection, createCopyItems, callback);
 			});
-			//createPage(srcPage.name, srcPage.title, destId, maxOrder+1, callback);
 		});
-		
 	});
 }
 
@@ -415,6 +440,4 @@ function copyTo(srcId, destId, treeCollection, createTreeItems, callback) {
 exports.feedRootNodes = feedRootNodes;
 exports.feedChildNodes = feedChildNodes;
 exports.feedTreeScopeNodes = feedTreeScopeNodes;
-
-/* simple functions */
-exports.findChildrenByParentIds = findChildrenByParentIds;
+exports.copyTo = copyTo;
