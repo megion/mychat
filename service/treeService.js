@@ -64,6 +64,18 @@ function findChildrenByParentIds(treeCollection, parentIds, callback) {
 	});
 }
 
+function findAllParentsById(treeCollection, nodeId, allParents, callback) {
+	treeCollection.findOne({
+		_id : nodeId
+	}, function(err, node) {
+		if (err) {
+			return callback(err);
+		}
+		
+		findAllParents(treeCollection, node, allParents, callback);
+	});
+}
+
 function findAllParents(treeCollection, node, allParents, callback) {
 	if (!node.parentId) {
 		// finish search
@@ -403,37 +415,53 @@ function copyChildren(srcItem, destItem, treeCollection, createCopyItems, callba
 }
 
 function copyTo(srcId, destId, treeCollection, createCopyItems, callback) {
-	// 1. Find all destination child
 	var destObjId = new ObjectId(destId);
-	findChildrenByParentIds(treeCollection, destObjId, function(err, destChildren) {
-		if (err) {
-			return callback(err);
-		}
-		
-		// find max order
-		var maxOrder = 0;
-		for (var i = 0; i < destChildren.length; i++) {
-			var child = destChildren[i];
-			if (maxOrder < child.order) {
-				maxOrder = child.order;
+	var srcObjId = new ObjectId(srcId);
+	findAllParentsById(treeCollection, destObjId, [], function(err, destParents){
+        // check src are parent dest - ERROR
+		for (var j = 0; j < destParents.length; j++) {
+			var destParent = destParents[j];
+			console.log("destParent._id: " + destParent._id + ", srcObjId: " + srcObjId);
+			
+			if (destParent._id.equals(srcObjId)) {
+				console.log("error");
+				return callback(new Error("Restrictions copy/move element to child"));
 			}
 		}
-		maxOrder++;
 		
-		// 1. Find source object
-		treeCollection.findOne({
-			_id : new ObjectId(srcId)
-		}, function(err, srcItem) {
+		// 1. Find all destination child
+		findChildrenByParentIds(treeCollection, destObjId, function(err, destChildren) {
 			if (err) {
 				return callback(err);
 			}
 			
-			// create copy
-			createCopyItems([srcItem], destObjId, maxOrder, function(err, createdItems) {
-				copyChildren(srcItem, createdItems[0], treeCollection, createCopyItems, callback);
+			// find max order
+			var maxOrder = 0;
+			for (var i = 0; i < destChildren.length; i++) {
+				var child = destChildren[i];
+				if (maxOrder < child.order) {
+					maxOrder = child.order;
+				}
+			}
+			maxOrder++;
+			
+			// 1. Find source object
+			treeCollection.findOne({
+				_id : srcObjId
+			}, function(err, srcItem) {
+				if (err) {
+					return callback(err);
+				}
+				
+				// create copy
+				createCopyItems([srcItem], destObjId, maxOrder, function(err, createdItems) {
+					copyChildren(srcItem, createdItems[0], treeCollection, createCopyItems, callback);
+				});
 			});
 		});
 	});
+	
+	
 }
 
 /* web functions */

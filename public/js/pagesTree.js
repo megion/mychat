@@ -79,7 +79,12 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 						
 						targetTreeControl.openNode(nodeLi, false);
 						megion.showLoadingStatus(false);
-					}
+					},
+					error: function (request, status, error) {
+						megion.showLoadingStatus(false);
+						log(request.responseText)
+						//alert(request.responseText);
+				    }
 				});
 			}
 			
