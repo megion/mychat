@@ -33,7 +33,9 @@ function createCopyItems(srcItems, parentId, startOrder, callback) {
 		pages.push(new Page(item.name, item.title, parentId, startOrder + i));
 	}
 	var collection = getCollection();
-	collection.insert(pages, function(err, results){
+	var batch = collection.initializeUnorderedBulkOp({useLegacyOps: true});
+	batch.insert(pages);	
+	batch.execute(function(err, results){
 		if (err) {
 			return callback(err);
 		}

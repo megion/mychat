@@ -393,22 +393,32 @@ function feedTreeScopeNodes(treeCollection, nodeId, callback) {
  * @param createTreeItems
  * @param callback
  */
-function copyChildren(srcItem, destItem, treeCollection, createCopyItems, callback) {
-	// 2. Find all destination child
+function copyChildren(srcItem, destItem, treeCollection, createCopyItems, asyncProcessCounter, callback) {
+	asyncProcessCounter.count++;
+	// find all destination child
+	console.log("copy children of src: " + srcItem._id + " to dest " 
+			+ destItem._id + " asyncProcessCounter.count: " + asyncProcessCounter.count);
 	findChildrenByParentIds(treeCollection, srcItem._id, function(err, srcChildren) {
 		if (err) {
 			return callback(err);
 		}
+		asyncProcessCounter.count--;
 		
-		if (srcChildren.length==0) {
+		if (srcChildren.length==0 && asyncProcessCounter.count==0) {
 			callback(null);
 		}
 		
 		// create copy of srcChildren
+		asyncProcessCounter.count++;
 		createCopyItems(srcChildren, destItem._id, 0, function(err, createdItems) {
+			if (err) {
+				return callback(err);
+			}
+			asyncProcessCounter.count--;
+			console.log("copy children of src: " + srcItem._id + " asyncProcessCounter.count: " + asyncProcessCounter.count);
 			// recursive copy all children of scrChildren
 			for (var i = 0; i < srcChildren.length; i++) {
-				copyChildren(srcChildren[i], createdItems[i], treeCollection, createCopyItems, callback);
+				copyChildren(srcChildren[i], createdItems[i], treeCollection, createCopyItems, asyncProcessCounter, callback);
 			}
 		});
 	});
@@ -421,12 +431,11 @@ function copyTo(srcId, destId, treeCollection, createCopyItems, callback) {
         // check src are parent dest - ERROR
 		for (var j = 0; j < destParents.length; j++) {
 			var destParent = destParents[j];
-			console.log("destParent._id: " + destParent._id + ", srcObjId: " + srcObjId);
+			//console.log("destParent._id: " + destParent._id + ", srcObjId: " + srcObjId);
 			
-			if (destParent._id.equals(srcObjId)) {
-				console.log("error");
-				return callback(new Error("Restrictions copy/move element to child"));
-			}
+			//if (destParent._id.equals(srcObjId)) {
+				//return callback(new Error("Restrictions copy/move element to child"));
+			//}
 		}
 		
 		// 1. Find all destination child
@@ -454,8 +463,10 @@ function copyTo(srcId, destId, treeCollection, createCopyItems, callback) {
 				}
 				
 				// create copy
+				var asyncProcessCounter = {};
+				asyncProcessCounter.count = 0;
 				createCopyItems([srcItem], destObjId, maxOrder, function(err, createdItems) {
-					copyChildren(srcItem, createdItems[0], treeCollection, createCopyItems, callback);
+					copyChildren(srcItem, createdItems[0], treeCollection, createCopyItems, asyncProcessCounter, callback);
 				});
 			});
 		});
