@@ -33,14 +33,29 @@ function createCopyItems(srcItems, parentId, startOrder, callback) {
 		pages.push(new Page(item.name, item.title, parentId, startOrder + i));
 	}
 	var collection = getCollection();
+	
+	collection.insert(pages, {w: 1}, function(err, results){
+		if (err) {
+			return callback(err);
+		}
+		callback(null, results.ops);
+	});
+	
+	/*var collection = getCollection();
 	var batch = collection.initializeUnorderedBulkOp({useLegacyOps: true});
-	batch.insert(pages);	
+	for (var i = 0; i < srcItems.length; i++) {
+		var item = srcItems[i];
+		batch.insert(new Page(item.name, item.title, parentId, startOrder + i));
+	}
+		
 	batch.execute(function(err, results){
 		if (err) {
 			return callback(err);
 		}
-		callback(null, results);
-	});
+		var upserts = results.getUpsertedIds();
+		console.log("upserts: " + upserts)
+		callback(null, upserts);
+	});*/
 }
 
 exports.createPage = createPage;

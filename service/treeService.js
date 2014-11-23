@@ -402,10 +402,12 @@ function copyChildren(srcItem, destItem, treeCollection, createCopyItems, asyncP
 		if (err) {
 			return callback(err);
 		}
-		asyncProcessCounter.count--;
+		//asyncProcessCounter.count--;
 		
-		if (srcChildren.length==0 && asyncProcessCounter.count==0) {
-			callback(null);
+		if (srcChildren.length==0) {
+			return;
+		} else if (asyncProcessCounter.count==0) {
+			return callback(null);
 		}
 		
 		// create copy of srcChildren
@@ -433,9 +435,9 @@ function copyTo(srcId, destId, treeCollection, createCopyItems, callback) {
 			var destParent = destParents[j];
 			//console.log("destParent._id: " + destParent._id + ", srcObjId: " + srcObjId);
 			
-			//if (destParent._id.equals(srcObjId)) {
-				//return callback(new Error("Restrictions copy/move element to child"));
-			//}
+			if (destParent._id.equals(srcObjId)) {
+				return callback(new Error("Restrictions copy/move element to child"));
+			}
 		}
 		
 		// 1. Find all destination child
@@ -466,6 +468,9 @@ function copyTo(srcId, destId, treeCollection, createCopyItems, callback) {
 				var asyncProcessCounter = {};
 				asyncProcessCounter.count = 0;
 				createCopyItems([srcItem], destObjId, maxOrder, function(err, createdItems) {
+					if (err) {
+						return callback(err);
+					}
 					copyChildren(srcItem, createdItems[0], treeCollection, createCopyItems, asyncProcessCounter, callback);
 				});
 			});
