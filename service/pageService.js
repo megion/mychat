@@ -40,22 +40,6 @@ function createCopyItems(srcItems, parentId, startOrder, callback) {
 		}
 		callback(null, results.ops);
 	});
-	
-	/*var collection = getCollection();
-	var batch = collection.initializeUnorderedBulkOp({useLegacyOps: true});
-	for (var i = 0; i < srcItems.length; i++) {
-		var item = srcItems[i];
-		batch.insert(new Page(item.name, item.title, parentId, startOrder + i));
-	}
-		
-	batch.execute(function(err, results){
-		if (err) {
-			return callback(err);
-		}
-		var upserts = results.getUpsertedIds();
-		console.log("upserts: " + upserts)
-		callback(null, upserts);
-	});*/
 }
 
 exports.createPage = createPage;

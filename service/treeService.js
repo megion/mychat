@@ -396,28 +396,31 @@ function feedTreeScopeNodes(treeCollection, nodeId, callback) {
 function copyChildren(srcItem, destItem, treeCollection, createCopyItems, asyncProcessCounter, callback) {
 	asyncProcessCounter.count++;
 	// find all destination child
-	console.log("copy children of src: " + srcItem._id + " to dest " 
-			+ destItem._id + " asyncProcessCounter.count: " + asyncProcessCounter.count);
+	console.log("asyncProcessCounter.count: " + asyncProcessCounter.count);
 	findChildrenByParentIds(treeCollection, srcItem._id, function(err, srcChildren) {
 		if (err) {
 			return callback(err);
 		}
-		//asyncProcessCounter.count--;
+		asyncProcessCounter.count--;
+		console.log("asyncProcessCounter.count: " + asyncProcessCounter.count);
 		
 		if (srcChildren.length==0) {
+			if (asyncProcessCounter.count==0) {
+				console.log("Finish copy to");
+				return callback(null);
+			}
 			return;
-		} else if (asyncProcessCounter.count==0) {
-			return callback(null);
 		}
 		
 		// create copy of srcChildren
 		asyncProcessCounter.count++;
+		console.log("asyncProcessCounter.count: " + asyncProcessCounter.count);
 		createCopyItems(srcChildren, destItem._id, 0, function(err, createdItems) {
 			if (err) {
 				return callback(err);
 			}
 			asyncProcessCounter.count--;
-			console.log("copy children of src: " + srcItem._id + " asyncProcessCounter.count: " + asyncProcessCounter.count);
+			console.log("asyncProcessCounter.count: " + asyncProcessCounter.count);
 			// recursive copy all children of scrChildren
 			for (var i = 0; i < srcChildren.length; i++) {
 				copyChildren(srcChildren[i], createdItems[i], treeCollection, createCopyItems, asyncProcessCounter, callback);
@@ -426,21 +429,61 @@ function copyChildren(srcItem, destItem, treeCollection, createCopyItems, asyncP
 	});
 }
 
-function copyTo(srcId, destId, treeCollection, createCopyItems, callback) {
-	var destObjId = new ObjectId(destId);
-	var srcObjId = new ObjectId(srcId);
-	findAllParentsById(treeCollection, destObjId, [], function(err, destParents){
-        // check src are parent dest - ERROR
-		for (var j = 0; j < destParents.length; j++) {
-			var destParent = destParents[j];
-			//console.log("destParent._id: " + destParent._id + ", srcObjId: " + srcObjId);
+/**
+ * Find siblings by object ID
+ */
+function findSiblings(objId, treeCollection, callback) {
+	// 1. Find source object
+	treeCollection.findOne({
+		_id : objId
+	}, function(err, item) {
+		if (err) {
+			return callback(err);
+		}
+		
+		findChildrenByParentIds(treeCollection, item._id, function(err, siblings) {
+			if (err) {
+				return callback(err);
+			}
 			
+			return callback(null, siblings);
+		});
+	});
+}
+
+/**
+ * Pass to callback TRUE if source object is one of the parent destination object.
+ */
+function isSrcParentDest(srcObjId, destObjId, treeCollection, callback) {
+	findAllParentsById(treeCollection, destObjId, [], function(err, destParents){
+		if (err) {
+			return callback(err);
+		}
+		for (var i = 0; i < destParents.length; i++) {
+			var destParent = destParents[i];
 			if (destParent._id.equals(srcObjId)) {
-				return callback(new Error("Restrictions copy/move element to child"));
+				return callback(null, true);
 			}
 		}
 		
-		// 1. Find all destination child
+		return callback(null, false);
+	});
+}
+
+function copyTo(srcId, destId, treeCollection, createCopyItems, callback) {
+	var destObjId = new ObjectId(destId);
+	var srcObjId = new ObjectId(srcId);
+	
+	isSrcParentDest(srcObjId, destObjId, treeCollection, function(err, srcIsParentDest){
+		if (err) {
+			return callback(err);
+		}
+		
+		if (srcIsParentDest) {
+			callback(new Error("Restrictions copy source element into its child"));
+		}
+		
+		// find all destination child
 		findChildrenByParentIds(treeCollection, destObjId, function(err, destChildren) {
 			if (err) {
 				return callback(err);
@@ -476,8 +519,33 @@ function copyTo(srcId, destId, treeCollection, createCopyItems, callback) {
 			});
 		});
 	});
+}
+
+function copyOver(srcId, destId, treeCollection, createCopyItems, callback) {
+	var destObjId = new ObjectId(destId);
+	var srcObjId = new ObjectId(srcId);
 	
-	
+	isSrcParentDest(srcObjId, destObjId, treeCollection, function(err, srcIsParentDest){
+		if (err) {
+			return callback(err);
+		}
+		
+		if (srcIsParentDest) {
+			callback(new Error("Restrictions copy source element into its child"));
+		}
+		
+		// find dest object
+		
+		// find dest siblings
+		findSiblings(destObjId, treeCollection, function(err, destSiblings) {
+			if (err) {
+				return callback(err);
+			}
+			
+			
+		});
+		
+	});
 }
 
 /* web functions */
