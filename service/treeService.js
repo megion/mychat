@@ -535,16 +535,49 @@ function copyOver(srcId, destId, treeCollection, createCopyItems, callback) {
 		}
 		
 		// find dest object
-		
-		// find dest siblings
-		findSiblings(destObjId, treeCollection, function(err, destSiblings) {
+		treeCollection.findOne({
+			_id : destObjId
+		}, function(err, destItem) {
 			if (err) {
 				return callback(err);
 			}
 			
+			// update sibling dest where order > dest.order
+			var parentObjId;
+			if (destItem.parentId) {
+				parentObjId = new ObjectId(destItem.parentId);
+			} else {
+				parentObjId = null;
+			}
+			console.log("update children of parent " + parentObjId + " where order >= " + destItem.order);
+			treeCollection.find({
+				parentId : parentObjId,
+				order: {$lte: destItem.order}
+			}).toArray(function(err, results) {
+				if (err) {
+					return callback(err);
+				}
+				for (var i = 0; i < results.length; i++) {
+					var res = results[i];
+					console.log("title: " + res.title + " order: " + res.order);
+				}
+				callback(null);
+			});
+			/*treeCollection.update({
+				parentId : parentObjId,
+				order: {$lte: destItem.order}
+			},
+			{multi: true},
+			{$inc: { order: 1 }},
+			function(err, results) {
+				if (err) {
+					return callback(err);
+				}
+				
+				console.log("results.nModified " + results.result.nModified);
+			});*/
 			
 		});
-		
 	});
 }
 
@@ -553,3 +586,4 @@ exports.feedRootNodes = feedRootNodes;
 exports.feedChildNodes = feedChildNodes;
 exports.feedTreeScopeNodes = feedTreeScopeNodes;
 exports.copyTo = copyTo;
+exports.copyOver = copyOver;

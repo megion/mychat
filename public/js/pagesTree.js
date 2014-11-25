@@ -60,8 +60,14 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 				var destId = dropTarget.nodeLi.nodeModel.id;
 				console.log("srcId: " + srcId + ", destId: " + destId);
 				var targetTreeControl = dropTarget.nodeLi.treeControl;
+				var actionUrl;
+			    if (dropTarget.state==tabaga.DropTarget.INTO) {
+			    	actionUrl = "pages/copyTo";
+			    } else {
+			    	actionUrl = "pages/copyOver";
+			    }
 				$.ajax({
-					url : "pages/copyTo",
+					url : actionUrl,
 					type: "POST",
 					dataType : "json",
 					data : {
