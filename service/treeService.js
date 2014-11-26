@@ -480,7 +480,7 @@ function copyTo(srcId, destId, treeCollection, createCopyItems, callback) {
 		}
 		
 		if (srcIsParentDest) {
-			callback(new Error("Restrictions copy source element into its child"));
+			return callback(new Error("Restrictions copy source element into its child"));
 		}
 		
 		// find all destination child
@@ -531,7 +531,7 @@ function copyOver(srcId, destId, treeCollection, createCopyItems, callback) {
 		}
 		
 		if (srcIsParentDest) {
-			callback(new Error("Restrictions copy source element into its child"));
+			return callback(new Error("Restrictions copy source element into its child"));
 		}
 		
 		// find dest object
@@ -549,34 +549,41 @@ function copyOver(srcId, destId, treeCollection, createCopyItems, callback) {
 			} else {
 				parentObjId = null;
 			}
+			
+			// update children where order >= destItem.order
 			console.log("update children of parent " + parentObjId + " where order >= " + destItem.order);
-			treeCollection.find({
+			treeCollection.update({
 				parentId : parentObjId,
-				order: {$lte: destItem.order}
-			}).toArray(function(err, results) {
-				if (err) {
-					return callback(err);
-				}
-				for (var i = 0; i < results.length; i++) {
-					var res = results[i];
-					console.log("title: " + res.title + " order: " + res.order);
-				}
-				callback(null);
-			});
-			/*treeCollection.update({
-				parentId : parentObjId,
-				order: {$lte: destItem.order}
+				order: {$gte: destItem.order}
 			},
-			{multi: true},
 			{$inc: { order: 1 }},
-			function(err, results) {
+			{multi: true},
+			function(err, upResult) {
 				if (err) {
 					return callback(err);
 				}
 				
-				console.log("results.nModified " + results.result.nModified);
-			});*/
-			
+				console.log("upResult.nModified " + upResult.result.nModified);
+				
+				// 1. Find source object
+				treeCollection.findOne({
+					_id : srcObjId
+				}, function(err, srcItem) {
+					if (err) {
+						return callback(err);
+					}
+					
+					// create copy of source item
+					var asyncProcessCounter = {};
+					asyncProcessCounter.count = 0;
+					createCopyItems([srcItem], parentObjId, destItem.order, function(err, createdItems) {
+						if (err) {
+							return callback(err);
+						}
+						copyChildren(srcItem, createdItems[0], treeCollection, createCopyItems, asyncProcessCounter, callback);
+					});
+				});
+			});
 		});
 	});
 }

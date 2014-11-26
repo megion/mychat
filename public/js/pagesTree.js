@@ -88,8 +88,7 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 					},
 					error: function (request, status, error) {
 						megion.showLoadingStatus(false);
-						log(request.responseText)
-						//alert(request.responseText);
+						log("Error status: " + status + " text: "+ request.responseText)
 				    }
 				});
 			}
@@ -148,7 +147,11 @@ PageTreeControl.prototype.loadChildNodes = function(nodeLi) {
 			// loaded data is array
 			self.updateExistNode(nodeLi, loadedData[0]);
 			megion.showLoadingStatus(false);
-		}
+		},
+		error: function (request, status, error) {
+			megion.showLoadingStatus(false);
+			log("Error status: " + status + " text: "+ request.responseText)
+	    }
 	});
 };
 
@@ -170,6 +173,10 @@ PageTreeControl.prototype.loadTreeScopeNodes = function(nodeId, setClosed) {
 			
 			self.openNode(nodeLi, setClosed);
 			megion.showLoadingStatus(false);
-		}
+		},
+		error: function (request, status, error) {
+			megion.showLoadingStatus(false);
+			log("Error status: " + status + " text: "+ request.responseText)
+	    }
 	});
 };
