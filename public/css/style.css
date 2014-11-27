@@ -162,3 +162,7 @@ body.stretchHeight {
     position: relative;
     top: 0;
 }
+
+.cm-opened {
+	background: none repeat scroll 0 0 rgba(255, 193, 0, 0.37);
+}

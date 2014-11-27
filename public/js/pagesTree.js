@@ -1,3 +1,7 @@
+var pagetree = {
+	TREE_NODE_CONTEXT_OPENED: 'cm-opened'	
+};
+
 function PageDropTarget(element) {
 	tabaga.DropTarget.apply(this, arguments);
 }
@@ -23,10 +27,17 @@ function PageNodeContextMenu() {
 }
 
 PageNodeContextMenu.prototype = Object.create(tabaga.PopupMenu.prototype);
+PageNodeContextMenu.prototype.onRemove = function(containerMenu) {
+	var nodeLi = this.element;
+	var nodeSpan = nodeLi.nodeSpan;
+	tabaga.removeClass(nodeSpan, pagetree.TREE_NODE_CONTEXT_OPENED);
+}
 PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 	var nodeLi = this.element;
 	var treeControl = nodeLi.treeControl;
-	treeControl.setSelectionTreeNode(nodeLi);
+	//treeControl.setSelectionTreeNode(nodeLi);
+	var nodeSpan = nodeLi.nodeSpan;
+	tabaga.addClass(nodeSpan, pagetree.TREE_NODE_CONTEXT_OPENED);
 
 	var ulContainer = megion.createSimpleTextContextMenu([ {
 		title : "Delete",
@@ -63,8 +74,13 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 				var actionUrl;
 			    if (dropTarget.state==tabaga.DropTarget.INTO) {
 			    	actionUrl = "pages/copyTo";
-			    } else {
+			    } else if (dropTarget.state==tabaga.DropTarget.OVER) {
 			    	actionUrl = "pages/copyOver";
+			    } else if (dropTarget.state==tabaga.DropTarget.UNDER) {
+			    	actionUrl = "pages/copyUnder";
+			    } else {
+			    	console.log("dropTarget.state " + dropTarget.state + " not supported");
+			    	return;
 			    }
 				$.ajax({
 					url : actionUrl,
@@ -75,15 +91,18 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 						"destId" : destId
 						
 					},
-					success : function(loadedData) {
-						console.log("loadedData: " + loadedData);
+					success : function(data) {
+						console.log("loadedData: " + data);
 						targetTreeControl.updateExistUlNodesContainer(targetTreeControl.treeUl,
-								loadedData);
+								data.treeScopeNodes);
+						targetTreeControl.processAllNodes(function(nodeL){
+							this.setNodeClose(nodeL);
+						});
 						// find Li by node Id. Before update nodeModel may be null.
-						var nodeModel = targetTreeControl.allNodesMap[destId];
+						var nodeModel = targetTreeControl.allNodesMap[data.topCreatedId];
 						var nodeLi = nodeModel.nodeLi
 						
-						targetTreeControl.openNode(nodeLi, false);
+						targetTreeControl.clickNode(nodeLi, true);
 						megion.showLoadingStatus(false);
 					},
 					error: function (request, status, error) {
@@ -113,6 +132,7 @@ PageTreeControl.prototype = Object.create(tabaga.TreeControl.prototype);
 PageTreeControl.prototype.appendNewNode = function(parentUl, newNode) {
 	var newNodeLi = tabaga.TreeControl.prototype.appendNewNode.apply(this,
 			arguments);
+	//newNodeLi.nodeSpan.innerHTML = newNodeLi.nodeSpan.innerHTML + " order "+ newNodeLi.nodeModel.order;
 
 	tabaga.popupMaster.makeContextable(newNodeLi);
 	var menu = new PageNodeContextMenu(newNodeLi/*, jQuery("#parentTreePages")[0]*/);
@@ -130,6 +150,7 @@ PageTreeControl.prototype.appendNewNode = function(parentUl, newNode) {
 
 	var dropTarget = new PageDropTarget(newNodeLi.nodeSpan);
 	dropTarget.nodeLi = newNodeLi;
+	return newNodeLi;
 	//tabaga.dragMaster.makeDraggable(newNodeLi.nodeSpan);
 };
 

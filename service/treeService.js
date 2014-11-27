@@ -393,37 +393,37 @@ function feedTreeScopeNodes(treeCollection, nodeId, callback) {
  * @param createTreeItems
  * @param callback
  */
-function copyChildren(srcItem, destItem, treeCollection, createCopyItems, asyncProcessCounter, callback) {
-	asyncProcessCounter.count++;
+function copyChildren(srcItem, destItem, treeCollection, createCopyItems, processStorage, callback) {
+	processStorage.asyncCount++;
 	// find all destination child
-	console.log("asyncProcessCounter.count: " + asyncProcessCounter.count);
+	console.log("processStorage.asyncCount: " + processStorage.asyncCount);
 	findChildrenByParentIds(treeCollection, srcItem._id, function(err, srcChildren) {
 		if (err) {
 			return callback(err);
 		}
-		asyncProcessCounter.count--;
-		console.log("asyncProcessCounter.count: " + asyncProcessCounter.count);
+		processStorage.asyncCount--;
+		console.log("processStorage.asyncCount: " + processStorage.asyncCount);
 		
 		if (srcChildren.length==0) {
-			if (asyncProcessCounter.count==0) {
-				console.log("Finish copy to");
-				return callback(null);
+			if (processStorage.asyncCount==0) {
+				console.log("Finish copy. Top created item: " + processStorage.topCreatedItem._id);
+				return callback(null, processStorage.topCreatedItem);
 			}
 			return;
 		}
 		
 		// create copy of srcChildren
-		asyncProcessCounter.count++;
-		console.log("asyncProcessCounter.count: " + asyncProcessCounter.count);
-		createCopyItems(srcChildren, destItem._id, 0, function(err, createdItems) {
+		processStorage.asyncCount++;
+		console.log("processStorage.asyncCount: " + processStorage.asyncCount);
+		createCopyItems(srcChildren, destItem._id, function(err, createdItems) {
 			if (err) {
 				return callback(err);
 			}
-			asyncProcessCounter.count--;
-			console.log("asyncProcessCounter.count: " + asyncProcessCounter.count);
+			processStorage.asyncCount--;
+			console.log("processStorage.asyncCount: " + processStorage.asyncCount);
 			// recursive copy all children of scrChildren
 			for (var i = 0; i < srcChildren.length; i++) {
-				copyChildren(srcChildren[i], createdItems[i], treeCollection, createCopyItems, asyncProcessCounter, callback);
+				copyChildren(srcChildren[i], createdItems[i], treeCollection, createCopyItems, processStorage, callback);
 			}
 		});
 	});
@@ -508,20 +508,26 @@ function copyTo(srcId, destId, treeCollection, createCopyItems, callback) {
 				}
 				
 				// create copy
-				var asyncProcessCounter = {};
-				asyncProcessCounter.count = 0;
-				createCopyItems([srcItem], destObjId, maxOrder, function(err, createdItems) {
+				var processStorage = {
+					asyncCount: 0
+				};
+				srcItem.order = maxOrder;
+				createCopyItems([srcItem], destObjId, function(err, createdItems) {
 					if (err) {
 						return callback(err);
 					}
-					copyChildren(srcItem, createdItems[0], treeCollection, createCopyItems, asyncProcessCounter, callback);
+					processStorage.topCreatedItem = createdItems[0];
+					copyChildren(srcItem, createdItems[0], treeCollection, createCopyItems, processStorage, callback);
 				});
 			});
 		});
 	});
 }
 
-function copyOver(srcId, destId, treeCollection, createCopyItems, callback) {
+/**
+ * Copy source object as neighbor of the destination object. 
+ */
+function copyNear(srcId, destId, offsetOrder, treeCollection, createCopyItems, callback) {
 	var destObjId = new ObjectId(destId);
 	var srcObjId = new ObjectId(srcId);
 	
@@ -551,10 +557,11 @@ function copyOver(srcId, destId, treeCollection, createCopyItems, callback) {
 			}
 			
 			// update children where order >= destItem.order
-			console.log("update children of parent " + parentObjId + " where order >= " + destItem.order);
+			var incOrder = destItem.order + offsetOrder;
+			console.log("update children of parent " + parentObjId + " where order >= " + incOrder);
 			treeCollection.update({
 				parentId : parentObjId,
-				order: {$gte: destItem.order}
+				order: {$gte: incOrder}
 			},
 			{$inc: { order: 1 }},
 			{multi: true},
@@ -574,18 +581,29 @@ function copyOver(srcId, destId, treeCollection, createCopyItems, callback) {
 					}
 					
 					// create copy of source item
-					var asyncProcessCounter = {};
-					asyncProcessCounter.count = 0;
-					createCopyItems([srcItem], parentObjId, destItem.order, function(err, createdItems) {
+					var processStorage = {
+						asyncCount: 0
+					};
+					srcItem.order = incOrder;
+					createCopyItems([srcItem], parentObjId, function(err, createdItems) {
 						if (err) {
 							return callback(err);
 						}
-						copyChildren(srcItem, createdItems[0], treeCollection, createCopyItems, asyncProcessCounter, callback);
+						processStorage.topCreatedItem = createdItems[0];
+						copyChildren(srcItem, createdItems[0], treeCollection, createCopyItems, processStorage, callback);
 					});
 				});
 			});
 		});
 	});
+}
+
+function copyOver(srcId, destId, treeCollection, createCopyItems, callback) {
+	copyNear(srcId, destId, 0, treeCollection, createCopyItems, callback);
+}
+
+function copyUnder(srcId, destId, treeCollection, createCopyItems, callback) {
+	copyNear(srcId, destId, 1, treeCollection, createCopyItems, callback);
 }
 
 /* web functions */
@@ -594,3 +612,5 @@ exports.feedChildNodes = feedChildNodes;
 exports.feedTreeScopeNodes = feedTreeScopeNodes;
 exports.copyTo = copyTo;
 exports.copyOver = copyOver;
+exports.copyUnder = copyUnder;
+

@@ -26,11 +26,11 @@ function createPage(name, title, parentId, order, callback) {
  * @param order
  * @param callback
  */
-function createCopyItems(srcItems, parentId, startOrder, callback) { 
+function createCopyItems(srcItems, parentId, callback) { 
 	var pages = [];
 	for (var i = 0; i < srcItems.length; i++) {
 		var item = srcItems[i];
-		pages.push(new Page(item.name, item.title, parentId, startOrder + i));
+		pages.push(new Page(item.name, item.title, parentId, item.order));
 	}
 	var collection = getCollection();
 	
