@@ -107,7 +107,7 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 					},
 					error: function (request, status, error) {
 						megion.showLoadingStatus(false);
-						log("Error status: " + status + " text: "+ request.responseText)
+						console.error("Error status: " + status + " text: "+ request.responseText)
 				    }
 				});
 			}
@@ -171,7 +171,7 @@ PageTreeControl.prototype.loadChildNodes = function(nodeLi) {
 		},
 		error: function (request, status, error) {
 			megion.showLoadingStatus(false);
-			log("Error status: " + status + " text: "+ request.responseText)
+			console.error("Error status: " + status + " text: "+ request.responseText)
 	    }
 	});
 };
@@ -197,7 +197,7 @@ PageTreeControl.prototype.loadTreeScopeNodes = function(nodeId, setClosed) {
 		},
 		error: function (request, status, error) {
 			megion.showLoadingStatus(false);
-			log("Error status: " + status + " text: "+ request.responseText)
+			console.error("Error status: " + status + " text: "+ request.responseText)
 	    }
 	});
 };
