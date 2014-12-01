@@ -42,6 +42,50 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 	var ulContainer = megion.createSimpleTextContextMenu([ {
 		title : "Delete",
 		onclick : function(e) {
+			tabaga.stopEventPropagation(e);
+			tabaga.popupMaster.closeContext();
+			
+			var answer = confirm("Delete page '" + nodeLi.nodeModel.title + "'?")
+			if (!answer) {
+			    console.log("No Delete page");
+			    return;
+			}
+			
+			megion.showLoadingStatus(true);
+			$.ajax({
+				url : "pages/removeNode",
+				type: "POST",
+				dataType : "json",
+				data : {
+					"id" : nodeLi.nodeModel.id
+				},
+				success : function(data) {
+					console.log("loadedData: " + data);
+					
+					var ulForUpdate;
+					if(data.parentId) {
+						var parentNodeModel = treeControl.allNodesMap[data.parentId];
+						ulForUpdate = parentNodeModel.nodeLi.subnodesUl;
+					} else {
+						// top level
+						ulForUpdate = treeControl.treeUl;
+					}
+					treeControl.updateExistUlNodesContainer(ulForUpdate,
+							data.siblingNodes);
+					
+					// close siblings node 
+					for (var i = 0; i < data.siblingNodes.length; i++) {
+						var sibNode = data.siblingNodes[i];
+						treeControl.setNodeClose(sibNode.nodeLi);
+					}
+					
+					megion.showLoadingStatus(false);
+				},
+				error: function (request, status, error) {
+					megion.showLoadingStatus(false);
+					console.error("Error status: " + status + " text: "+ request.responseText)
+			    }
+			});
 		}
 	}, {
 		title : "Move",

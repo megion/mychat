@@ -93,4 +93,39 @@ router.post('/copyUnder', function(req, res, next) {
 	});
 });
 
+router.post('/removeNode', function(req, res, next) {
+	var pageCollection = pageService.getCollection();
+	treeService.removeNode(req.param("id"), pageCollection, function(err, parentId) {
+		if (err) {
+			return next(err);
+		}
+		
+		if (parentId) {
+			var pId = parentId.toString();
+			treeService.feedChildNodes(pageCollection, pId, function(err, parentNode) {
+				if (err)
+					return next(err);
+				
+				var result = {
+					parentId: pId,
+					siblingNodes: parentNode[0].children
+				};
+				res.json(result);
+			});
+		} else {
+			treeService.feedRootNodes(pageCollection, function(err, rootNodes) {
+				if (err)
+					return next(err);
+				
+				var result = {
+					parentId: null,
+					siblingNodes: rootNodes
+				};
+				res.json(result);
+			});
+		}
+		
+	});
+});
+
 module.exports = router;

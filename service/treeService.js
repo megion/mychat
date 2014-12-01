@@ -309,6 +309,7 @@ function feedRootNodes(treeCollection, callback) {
 		});
 	});
 }
+
 function feedChildNodes(treeCollection, nodeId, callback) {
 	treeCollection.findOne({
 		_id : new ObjectId(nodeId)
@@ -427,6 +428,40 @@ function copyChildren(srcItem, destItem, treeCollection, createCopyItems, proces
 			}
 		});
 	});
+}
+
+function removeChildren(item, treeCollection, processStorage, callback) {
+	processStorage.asyncCount++;
+	console.log("remove processStorage.asyncCount: " + processStorage.asyncCount);
+	// remove item
+	treeCollection.remove({_id: item._id}, function(err, numberRemoved) {
+		if (err) {
+			return callback(err);
+		}
+		// remove children
+		findChildrenByParentIds(treeCollection, item._id, function(err, children) {
+			if (err) {
+				return callback(err);
+			}
+			processStorage.asyncCount--;
+			console.log("remove processStorage.asyncCount: " + processStorage.asyncCount);
+			
+			if (children.length==0) {
+				if (processStorage.asyncCount==0) {
+					console.log("Finish remove");
+					return callback(null, processStorage.parentId);
+				}
+				return;
+			}
+			
+			// recursive remove children
+			for (var i = 0; i < children.length; i++) {
+				removeChildren(children[i], treeCollection, processStorage, callback);
+			}
+		});
+	});
+	
+	
 }
 
 /**
@@ -606,6 +641,25 @@ function copyUnder(srcId, destId, treeCollection, createCopyItems, callback) {
 	copyNear(srcId, destId, 1, treeCollection, createCopyItems, callback);
 }
 
+function removeNode(id, treeCollection, callback) {
+	var objId = new ObjectId(id);
+	
+	treeCollection.findOne({
+		_id : objId
+	}, function(err, item) {
+		if (err) {
+			return callback(err);
+		}
+		
+		var processStorage = {
+			asyncCount: 0,
+			parentId: item.parentId
+		};
+		removeChildren(item, treeCollection, processStorage, callback);
+	});
+	
+}
+
 /* web functions */
 exports.feedRootNodes = feedRootNodes;
 exports.feedChildNodes = feedChildNodes;
@@ -613,4 +667,5 @@ exports.feedTreeScopeNodes = feedTreeScopeNodes;
 exports.copyTo = copyTo;
 exports.copyOver = copyOver;
 exports.copyUnder = copyUnder;
+exports.removeNode = removeNode;
 
