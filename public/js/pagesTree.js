@@ -71,13 +71,7 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 						ulForUpdate = treeControl.treeUl;
 					}
 					treeControl.updateExistUlNodesContainer(ulForUpdate,
-							data.siblingNodes);
-					
-					// close siblings node 
-					for (var i = 0; i < data.siblingNodes.length; i++) {
-						var sibNode = data.siblingNodes[i];
-						treeControl.setNodeClose(sibNode.nodeLi);
-					}
+							data.siblingNodes, true);
 					
 					megion.showLoadingStatus(false);
 				},
@@ -105,10 +99,16 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 			var onDragSuccessFn = dragObject.onDragSuccess;
 			dragObject.onDragSuccess = function(dropTarget) {
 				// call super
-				onDragSuccessFn.apply(this, arguments);
+				onDragSuccessFn.apply(this, arguments);	
+				// copy ...
+				var answer = confirm("Copy page '" + nodeLi.nodeModel.title + "'?")
+				if (!answer) {
+				    console.log("No Copy page");
+				    return;
+				}
+				
 				console.log("Copy: DropTarget: " + dropTarget + " accept DragObject: " + this
 						+ " state: " + dropTarget.state);
-				// copy ...
 				
 				megion.showLoadingStatus(true);
 				var srcId = this.nodeLi.nodeModel.id;
@@ -138,10 +138,7 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 					success : function(data) {
 						console.log("loadedData: " + data);
 						targetTreeControl.updateExistUlNodesContainer(targetTreeControl.treeUl,
-								data.treeScopeNodes);
-						targetTreeControl.processAllNodes(function(nodeL){
-							this.setNodeClose(nodeL);
-						});
+								data.treeScopeNodes, true);
 						// find Li by node Id. Before update nodeModel may be null.
 						var nodeModel = targetTreeControl.allNodesMap[data.topCreatedId];
 						var nodeLi = nodeModel.nodeLi
@@ -210,7 +207,7 @@ PageTreeControl.prototype.loadChildNodes = function(nodeLi) {
 		},
 		success : function(loadedData) {
 			// loaded data is array
-			self.updateExistNode(nodeLi, loadedData[0]);
+			self.updateExistNode(nodeLi, loadedData[0], false);
 			megion.showLoadingStatus(false);
 		},
 		error: function (request, status, error) {
@@ -231,7 +228,7 @@ PageTreeControl.prototype.loadTreeScopeNodes = function(nodeId, setClosed) {
 		},
 		success : function(loadedData) {
 			self.updateExistUlNodesContainer(self.treeUl,
-					loadedData);
+					loadedData, false);
 			// find Li by node Id. Before update nodeModel may be null.
 			var nodeModel = self.allNodesMap[nodeId];
 			var nodeLi = nodeModel.nodeLi
