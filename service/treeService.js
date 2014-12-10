@@ -231,6 +231,9 @@ function compareNode(nodeA, nodeB) {
 	return nodeA.order - nodeB.order;
 }
 
+/**
+ * Fill allNodes array by children of parents tree. Find children has level <= MAX_LEVEL
+ */
 function buildTreeByParents(treeCollection, parents, level, allNodes, callback) {
 	findChildrenByParents(treeCollection, parents,
 			function(err, children) {
@@ -252,7 +255,6 @@ function buildTreeByParents(treeCollection, parents, level, allNodes, callback) 
 					// no more children. Finalize build tree.
 					callback(null, allNodes);
 				}
-
 			});
 }
 /**
@@ -265,6 +267,7 @@ function getTreeNodesByParents(treeCollection, parents, callback) {
 	buildTreeByParents(treeCollection, parents, level, parents, callback);
 }
 
+// сделать поддержку построения tree scope сразу для нескольких узлов
 function buildTreeScope(treeCollection, node, allNodes, callback) {
 	if (!node.parentId) {
 		// finish search
@@ -350,7 +353,7 @@ function feedTreeScopeNodes(treeCollection, nodeId, callback) {
 		if (!node) {
 			return callback(new Error("Failed feed tree scope nodes. Tree node not found by id: " + nodeId));
 		}
-		
+		// 1. get all tree children nodes for parents [node]
 		getTreeNodesByParents(treeCollection, [node], function(err, treeNodes) {
 			if (err) {
 				return callback(err);

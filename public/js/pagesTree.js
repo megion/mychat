@@ -60,18 +60,9 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 					"id" : nodeLi.nodeModel.id
 				},
 				success : function(data) {
-					console.log("loadedData: " + data);
-					
-					var ulForUpdate;
-					if(data.parentId) {
-						var parentNodeModel = treeControl.allNodesMap[data.parentId];
-						ulForUpdate = parentNodeModel.nodeLi.subnodesUl;
-					} else {
-						// top level
-						ulForUpdate = treeControl.treeUl;
-					}
-					treeControl.updateExistUlNodesContainer(ulForUpdate,
-							data.siblingNodes, true);
+					treeControl.updateExistUlNodesContainer(treeControl.treeUl,
+							data.treeScopeNodes, true);
+					treeControl.updateState();
 					
 					megion.showLoadingStatus(false);
 				},
@@ -133,10 +124,8 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 					data : {
 						"srcId" : srcId,
 						"destId" : destId
-						
 					},
 					success : function(data) {
-						console.log("loadedData: " + data);
 						targetTreeControl.updateExistUlNodesContainer(targetTreeControl.treeUl,
 								data.treeScopeNodes, true);
 						// find Li by node Id. Before update nodeModel may be null.
@@ -217,7 +206,7 @@ PageTreeControl.prototype.loadChildNodes = function(nodeLi) {
 	});
 };
 
-PageTreeControl.prototype.loadTreeScopeNodes = function(nodeId, setClosed) {
+PageTreeControl.prototype.loadTreeScopeNodes = function(nodeId, setClosed, updateCloseState) {
 	megion.showLoadingStatus(true);
 	var self = this;
 	$.ajax({
@@ -228,7 +217,7 @@ PageTreeControl.prototype.loadTreeScopeNodes = function(nodeId, setClosed) {
 		},
 		success : function(loadedData) {
 			self.updateExistUlNodesContainer(self.treeUl,
-					loadedData, false);
+					loadedData, updateCloseState);
 			// find Li by node Id. Before update nodeModel may be null.
 			var nodeModel = self.allNodesMap[nodeId];
 			var nodeLi = nodeModel.nodeLi

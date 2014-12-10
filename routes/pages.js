@@ -99,16 +99,16 @@ router.post('/removeNode', function(req, res, next) {
 		if (err) {
 			return next(err);
 		}
-		
+	
 		if (parentId) {
 			var pId = parentId.toString();
-			treeService.feedChildNodes(pageCollection, pId, function(err, parentNode) {
-				if (err)
+			treeService.feedTreeScopeNodes(pageCollection, pId, function(err, treeScopeNodes) {
+				if (err) {
 					return next(err);
+				}
 				
 				var result = {
-					parentId: pId,
-					siblingNodes: parentNode[0].children
+					treeScopeNodes: treeScopeNodes
 				};
 				res.json(result);
 			});
@@ -118,8 +118,7 @@ router.post('/removeNode', function(req, res, next) {
 					return next(err);
 				
 				var result = {
-					parentId: null,
-					siblingNodes: rootNodes
+					treeScopeNodes: rootNodes
 				};
 				res.json(result);
 			});
