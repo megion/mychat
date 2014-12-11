@@ -1,7 +1,8 @@
 var Page = require('models/page').Page,
     mongodb = require('lib/mongodb'),
     async = require('async'),
-    ObjectId = require('mongodb').ObjectID;
+    ObjectId = require('mongodb').ObjectID,
+    asyncUtils = require('utils/asyncUtils');
 
 var log = require('lib/log')(module);
 
@@ -73,6 +74,49 @@ function findAllParentsById(treeCollection, nodeId, allParents, callback) {
 		}
 		
 		findAllParents(treeCollection, node, allParents, callback);
+	});
+}
+
+function findAllParentsMapByNodes(treeCollection, nodes, allParentsMap, callback) {
+	var nodeResultFn = function(parents, totalResults) {
+		
+	}; 
+	asyncUtils.eachSeries(nodes, function(node, totalResults) {
+		
+	}, function(err, totalResults) {
+		if (err) {
+			return callback(err);
+		}
+		
+		return callback(null, totalResults.allParentsMap);
+	});
+}
+
+function iterateByParents(treeCollection, node, allParents, allParentsMap, iteratorFn, callback) {
+	if (!node.parentId) {
+		// finish search
+		return callback(null, allParents);
+	}
+
+	treeCollection.findOne({
+		_id : new ObjectId(node.parentId)
+	}, function(err, parent) {
+		if (err) {
+			return callback(err);
+		}
+
+		if (!parent) {
+			throw new Error("Tree node not found by id: " + node.parentId);
+		}
+		
+		var canNext = iteratorFn(parent, allParentsMap);
+		if (!canNext) {
+			return callback(null, allParents, allParentsMap);
+		}
+		
+		allParents.push(parent);
+		allParentsMap[parent._id.toString()] = parent;
+		findAllParents(treeCollection, parent, allParents, callback);
 	});
 }
 
