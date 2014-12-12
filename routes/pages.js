@@ -29,7 +29,7 @@ router.get('/page', function(req, res, next) {
 
 router.get('/pageTreeScope', function(req, res, next) {
 	var pageCollection = pageService.getCollection();
-	treeService.feedTreeScopeNodes(pageCollection, req.param("nodeId"), function(err, treeScopeNodes) {
+	treeService.feedTreeScopeNodes(pageCollection, [req.param("nodeId")], function(err, treeScopeNodes) {
 		if (err)
 			return next(err);
 		res.json(treeScopeNodes);
@@ -42,7 +42,7 @@ router.post('/copyTo', function(req, res, next) {
 		if (err)
 			return next(err);
 		
-		treeService.feedTreeScopeNodes(pageCollection, topCreatedItem._id.toString(), function(err, treeScopeNodes) {
+		treeService.feedTreeScopeNodes(pageCollection, [topCreatedItem._id.toString()], function(err, treeScopeNodes) {
 			if (err)
 				return next(err);
 			var result = {
@@ -60,7 +60,7 @@ router.post('/copyOver', function(req, res, next) {
 			return next(err);
 		}
 		
-		treeService.feedTreeScopeNodes(pageCollection, topCreatedItem._id.toString(), function(err, treeScopeNodes) {
+		treeService.feedTreeScopeNodes(pageCollection, [topCreatedItem._id.toString()], function(err, treeScopeNodes) {
 			if (err) {
 				return next(err);
 			}
@@ -80,7 +80,7 @@ router.post('/copyUnder', function(req, res, next) {
 			return next(err);
 		}
 		
-		treeService.feedTreeScopeNodes(pageCollection, topCreatedItem._id.toString(), function(err, treeScopeNodes) {
+		treeService.feedTreeScopeNodes(pageCollection, [topCreatedItem._id.toString()], function(err, treeScopeNodes) {
 			if (err) {
 				return next(err);
 			}
@@ -102,7 +102,7 @@ router.post('/removeNode', function(req, res, next) {
 	
 		if (parentId) {
 			var pId = parentId.toString();
-			treeService.feedTreeScopeNodes(pageCollection, pId, function(err, treeScopeNodes) {
+			treeService.feedTreeScopeNodes(pageCollection, [pId], function(err, treeScopeNodes) {
 				if (err) {
 					return next(err);
 				}

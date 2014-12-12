@@ -1,27 +1,25 @@
-function eachSeries(arr, iteratorFn, callback) {
-	var acyncProcessStorage = {
-		count: 0,
-		results: {}
-	};
-	
-	iterateOneSeries(objects, acyncProcessStorage, iteratorFn, callback);
+function eachSeries(arr, iteratorFn, eachResultFn, callback) {
+	iterateOneSeries(arr, 0, iteratorFn, eachResultFn, callback);
 }
 
-function iterateOneSeries(objects, acyncProcessStorage, iteratorFn, callback) {
-	if (acyncProcessStorage.count>=(objects.length)) {
+function iterateOneSeries(arr, count, iteratorFn, eachResultFn, callback) {
+	if (count>=(arr.length)) {
 		// finish
-		return callback(null, acyncProcessStorage.results);
+		return callback(null);
 	}
 	
-	iteratorFn(objects[acyncProcessStorage.count], acyncProcessStorage.results, function(err, result, successResultFn) {
+	iteratorFn(arr[count], function(err) {
 		if (err) {
 			return callback(err);
 		}
 		
-		successResultFn(result, acyncProcessStorage.results);
-		
-		acyncProcessStorage.count++;
-		iterateOneSeries(objects, acyncProcessStorage, eachFn, callback);
+		var args = Array.prototype.slice.call(arguments, 1);
+        if (args.length <= 1) {
+            args = args[0];
+        }
+		eachResultFn.apply(null, args);
+		count++;
+		iterateOneSeries(arr, count, iteratorFn, eachResultFn, callback);
 	});
 }
 

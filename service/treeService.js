@@ -77,25 +77,45 @@ function findAllParentsById(treeCollection, nodeId, allParents, callback) {
 	});
 }
 
-function findAllParentsMapByNodes(treeCollection, nodes, allParentsMap, callback) {
-	var nodeResultFn = function(parents, totalResults) {
-		
-	}; 
-	asyncUtils.eachSeries(nodes, function(node, totalResults) {
-		
-	}, function(err, totalResults) {
+function findAllParentsMapByNodes(treeCollection, nodes, callback) {
+	var allParents = [];
+	var allParentsMap = {};
+
+	asyncUtils.eachSeries(nodes,
+	// iterator function
+	function(node, eachResultCallback) {
+		iterateByParents(treeCollection, node, [], {},
+		// can next function
+		function(node, parents, parentsMap) {
+			if (allParentsMap[node._id.toString()]) {
+				return false;
+			}
+
+			return true;
+		}, eachResultCallback);
+	},
+	// iterator result callback
+	function(parents, parentsMap) {
+		allParents.concat(parents);
+		for (var i = 0; i < parents.length; i++) {
+			var p = parents[i];
+			allParentsMap[p._id.toString()] = p;
+		}
+	},
+	// finish iterator result
+	function(err) {
 		if (err) {
 			return callback(err);
 		}
-		
-		return callback(null, totalResults.allParentsMap);
+
+		return callback(null, allParents, allParentsMap);
 	});
 }
 
-function iterateByParents(treeCollection, node, allParents, allParentsMap, iteratorFn, callback) {
+function iterateByParents(treeCollection, node, parents, parentsMap, canNextFn, callback) {
 	if (!node.parentId) {
 		// finish search
-		return callback(null, allParents);
+		return callback(null, parents, parentsMap);
 	}
 
 	treeCollection.findOne({
@@ -109,14 +129,14 @@ function iterateByParents(treeCollection, node, allParents, allParentsMap, itera
 			throw new Error("Tree node not found by id: " + node.parentId);
 		}
 		
-		var canNext = iteratorFn(parent, allParentsMap);
+		var canNext = canNextFn(parent, parents, parentsMap);
 		if (!canNext) {
-			return callback(null, allParents, allParentsMap);
+			return callback(null, parents, parentsMap);
 		}
 		
-		allParents.push(parent);
-		allParentsMap[parent._id.toString()] = parent;
-		findAllParents(treeCollection, parent, allParents, callback);
+		parents.push(parent);
+		parentsMap[parent._id.toString()] = parent;
+		iterateByParents(treeCollection, parent, parents, parentsMap, canNextFn, callback);
 	});
 }
 
@@ -312,30 +332,33 @@ function getTreeNodesByParents(treeCollection, parents, callback) {
 }
 
 // сделать поддержку построения tree scope сразу для нескольких узлов
-function buildTreeScope(treeCollection, node, allNodes, callback) {
-	if (!node.parentId) {
-		// finish search
-		return callback(null, allNodes, node);
-	}
-
-	treeCollection.findOne({
-		_id : new ObjectId(node.parentId)
-	}, function(err, parent) {
+function buildTreeScope(treeCollection, nodes, allNodes, callback) {
+	findAllParentsMapByNodes(treeCollection, nodes, function(err, allParents,
+			allParentsMap) {
+		console.log("allParents: " + allParents);
 		if (err) {
 			return callback(err);
 		}
 
-		if (!parent) {
-			throw new Error("Tree node not found by id: " + node.parentId);
-		}
-
-		getTreeNodesByParents(treeCollection, [parent], function(err, treeNodes) {
+		asyncUtils.eachSeries(allParents,
+		// iterator function
+		function(parent, eachResultCallback) {
+			getTreeNodesByParents(treeCollection, [ parent ],
+					eachResultCallback);
+		},
+		// iterator result callback
+		function(treeNodes) {
+			allNodes.concat(treeNodes);
+		},
+		// finish iterator result
+		function(err) {
 			if (err) {
 				return callback(err);
 			}
-			var nodes = allNodes.concat(treeNodes);
-			buildTreeScope(treeCollection, parent, nodes, callback);
+
+			return callback(null, allNodes);
 		});
+
 	});
 }
 
@@ -386,24 +409,35 @@ function feedChildNodes(treeCollection, nodeId, callback) {
  * add to the tree of the all roots nodes. Id is need for recover tree node
  * information. Fore example request to open any tree node
  */
-function feedTreeScopeNodes(treeCollection, nodeId, callback) {
-	treeCollection.findOne({
-		_id : new ObjectId(nodeId)
-	}, function(err, node) {
+function feedTreeScopeNodes(treeCollection, ids, callback) {
+	var nodeIds = [];
+	for (var i = 0; i < ids.length; i++) {
+		nodeIds[i] = new ObjectId(ids[i]);
+	}
+	
+	treeCollection.find({
+		_id : {
+			$in : nodeIds
+		}
+	}).toArray(function(err, nodes) {
 		if (err) {
 			return callback(err);
 		}
 		
-		if (!node) {
-			return callback(new Error("Failed feed tree scope nodes. Tree node not found by id: " + nodeId));
+		if (!nodes) {
+			return callback(new Error("Failed feed tree scope nodes. Tree nodes not found for ids: " + ids));
 		}
+		if (nodes.length!=ids.length) {
+			return callback(new Error("Failed feed tree scope nodes. Some tree nodes not found for ids: " + ids));
+		}
+		
 		// 1. get all tree children nodes for parents [node]
-		getTreeNodesByParents(treeCollection, [node], function(err, treeNodes) {
+		getTreeNodesByParents(treeCollection, nodes, function(err, treeNodes) {
 			if (err) {
 				return callback(err);
 			}
 			// build tree for all parents
-			buildTreeScope(treeCollection, node, treeNodes, function(
+			buildTreeScope(treeCollection, nodes, treeNodes, function(
 					err, allNodes, topNode) {
 				if (err) {
 					return callback(err);
