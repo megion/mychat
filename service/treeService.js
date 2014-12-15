@@ -96,7 +96,7 @@ function findAllParentsMapByNodes(treeCollection, nodes, callback) {
 	},
 	// iterator result callback
 	function(parents, parentsMap) {
-		allParents.concat(parents);
+		allParents = allParents.concat(parents);
 		for (var i = 0; i < parents.length; i++) {
 			var p = parents[i];
 			allParentsMap[p._id.toString()] = p;
@@ -332,7 +332,8 @@ function getTreeNodesByParents(treeCollection, parents, callback) {
 }
 
 // сделать поддержку построения tree scope сразу для нескольких узлов
-function buildTreeScope(treeCollection, nodes, allNodes, callback) {
+function buildTreeScope(treeCollection, nodes, callback) {
+	var allNodes = [];
 	findAllParentsMapByNodes(treeCollection, nodes, function(err, allParents,
 			allParentsMap) {
 		console.log("allParents: " + allParents);
@@ -348,7 +349,7 @@ function buildTreeScope(treeCollection, nodes, allNodes, callback) {
 		},
 		// iterator result callback
 		function(treeNodes) {
-			allNodes.concat(treeNodes);
+			allNodes = allNodes.concat(treeNodes);
 		},
 		// finish iterator result
 		function(err) {
@@ -437,11 +438,13 @@ function feedTreeScopeNodes(treeCollection, ids, callback) {
 				return callback(err);
 			}
 			// build tree for all parents
-			buildTreeScope(treeCollection, nodes, treeNodes, function(
-					err, allNodes, topNode) {
+			buildTreeScope(treeCollection, nodes, function(
+					err, allNodes) {
 				if (err) {
 					return callback(err);
 				}
+				
+				allNodes = allNodes.concat(treeNodes);
 				
 				// find roots nodes for including to the results 
 				findChildrenByParentIds(treeCollection, null, function(err, rootNodes) {
@@ -449,12 +452,12 @@ function feedTreeScopeNodes(treeCollection, ids, callback) {
 						return callback(err);
 					}
 					
-					getTreeNodesByParents(treeCollection, rootNodes, function(err, treeNodes) {
+					getTreeNodesByParents(treeCollection, rootNodes, function(err, rootTreeNodes) {
 						if (err) {
 							return callback(err);
 						}
 						
-						allNodes = allNodes.concat(treeNodes);
+						allNodes = allNodes.concat(rootTreeNodes);
 						var normNodes = normolizeTreeNodes(allNodes);
 
 						var topNodes = processBuildTree(normNodes,

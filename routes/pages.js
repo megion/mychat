@@ -42,7 +42,7 @@ router.post('/copyTo', function(req, res, next) {
 		if (err)
 			return next(err);
 		
-		treeService.feedTreeScopeNodes(pageCollection, [topCreatedItem._id.toString()], function(err, treeScopeNodes) {
+		treeService.feedTreeScopeNodes(pageCollection, [topCreatedItem._id.toString(), req.param("srcId")], function(err, treeScopeNodes) {
 			if (err)
 				return next(err);
 			var result = {
@@ -60,7 +60,7 @@ router.post('/copyOver', function(req, res, next) {
 			return next(err);
 		}
 		
-		treeService.feedTreeScopeNodes(pageCollection, [topCreatedItem._id.toString()], function(err, treeScopeNodes) {
+		treeService.feedTreeScopeNodes(pageCollection, [topCreatedItem._id.toString(), req.param("srcId")], function(err, treeScopeNodes) {
 			if (err) {
 				return next(err);
 			}
@@ -80,7 +80,7 @@ router.post('/copyUnder', function(req, res, next) {
 			return next(err);
 		}
 		
-		treeService.feedTreeScopeNodes(pageCollection, [topCreatedItem._id.toString()], function(err, treeScopeNodes) {
+		treeService.feedTreeScopeNodes(pageCollection, [topCreatedItem._id.toString(), req.param("srcId")], function(err, treeScopeNodes) {
 			if (err) {
 				return next(err);
 			}

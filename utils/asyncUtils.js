@@ -13,10 +13,8 @@ function iterateOneSeries(arr, count, iteratorFn, eachResultFn, callback) {
 			return callback(err);
 		}
 		
+		// skip error argument
 		var args = Array.prototype.slice.call(arguments, 1);
-        if (args.length <= 1) {
-            args = args[0];
-        }
 		eachResultFn.apply(null, args);
 		count++;
 		iterateOneSeries(arr, count, iteratorFn, eachResultFn, callback);
