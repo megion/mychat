@@ -1,21 +1,21 @@
 
 
-# ${projectname}
+Node.js WEB application for test [tabaga](https://github.com/megion/tabaga) GUI controls   
 
+## Installation
 
+Install MongoDb server [mongodb](http://www.mongodb.org/)
 
-## Usage
+Clone project, then install the dependencies:
 
+    $ cd mychat
+    $ npm install
 
+## Run
 
-## Developing
+Then run whichever tests you want:
 
-
-
-### Tools
-
-
-Created with [Nodeclipse](https://github.com/Nodeclipse/nodeclipse-1)
- ([Eclipse Marketplace](http://marketplace.eclipse.org/content/nodeclipse), [site](http://www.nodeclipse.org))   
-
-Nodeclipse is free open-source project that grows with your contributions.
+    $ NODE_PATH=. node app
+    
+    
+    
