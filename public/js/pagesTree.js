@@ -52,17 +52,21 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 			}
 			
 			megion.showLoadingStatus(true);
+			var sendData = {
+				"id" : nodeLi.nodeModel.id
+			};
+			if (treeControl.currentSelectedNodeLi) {
+			    sendData.selectedId = treeControl.currentSelectedNodeLi.nodeModel.id;
+			}
 			$.ajax({
 				url : "pages/removeNode",
 				type: "POST",
 				dataType : "json",
-				data : {
-					"id" : nodeLi.nodeModel.id
-				},
+				data : sendData,
 				success : function(data) {
 					treeControl.updateExistUlNodesContainer(treeControl.treeUl,
 							data.treeScopeNodes, true);
-					treeControl.updateState();
+					//treeControl.updateState();
 					
 					megion.showLoadingStatus(false);
 				},
@@ -117,22 +121,27 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 			    	console.log("dropTarget.state " + dropTarget.state + " not supported");
 			    	return;
 			    }
+			    var sendData = {
+					"srcId" : srcId,
+					"destId" : destId
+				};
+			    if (targetTreeControl.currentSelectedNodeLi) {
+			    	sendData.selectedId = targetTreeControl.currentSelectedNodeLi.nodeModel.id;
+			    }
 				$.ajax({
 					url : actionUrl,
 					type: "POST",
 					dataType : "json",
-					data : {
-						"srcId" : srcId,
-						"destId" : destId
-					},
+					data : sendData,
 					success : function(data) {
 						targetTreeControl.updateExistUlNodesContainer(targetTreeControl.treeUl,
 								data.treeScopeNodes, true);
-						// find Li by node Id. Before update nodeModel may be null.
+						// find new Li by node Id. Before update nodeModel may be null.
 						var nodeModel = targetTreeControl.allNodesMap[data.topCreatedId];
 						var nodeLi = nodeModel.nodeLi
+						targetTreeControl.setAllParentNodeClose(nodeLi, false);
+						targetTreeControl.setNodeClose(nodeLi, false);
 						
-						targetTreeControl.clickNode(nodeLi, true);
 						megion.showLoadingStatus(false);
 					},
 					error: function (request, status, error) {

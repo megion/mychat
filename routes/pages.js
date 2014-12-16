@@ -42,7 +42,11 @@ router.post('/copyTo', function(req, res, next) {
 		if (err)
 			return next(err);
 		
-		treeService.feedTreeScopeNodes(pageCollection, [topCreatedItem._id.toString(), req.param("srcId")], function(err, treeScopeNodes) {
+		var treeScopeIds = [topCreatedItem._id.toString(), req.param("srcId")];
+		if (req.param("selectedId")) {
+			treeScopeIds.push(req.param("selectedId"));
+		}
+		treeService.feedTreeScopeNodes(pageCollection, treeScopeIds, function(err, treeScopeNodes) {
 			if (err)
 				return next(err);
 			var result = {
@@ -60,7 +64,12 @@ router.post('/copyOver', function(req, res, next) {
 			return next(err);
 		}
 		
-		treeService.feedTreeScopeNodes(pageCollection, [topCreatedItem._id.toString(), req.param("srcId")], function(err, treeScopeNodes) {
+		var treeScopeIds = [topCreatedItem._id.toString(), req.param("srcId")];
+		if (req.param("selectedId")) {
+			treeScopeIds.push(req.param("selectedId"));
+		}
+		
+		treeService.feedTreeScopeNodes(pageCollection, treeScopeIds, function(err, treeScopeNodes) {
 			if (err) {
 				return next(err);
 			}
@@ -80,7 +89,12 @@ router.post('/copyUnder', function(req, res, next) {
 			return next(err);
 		}
 		
-		treeService.feedTreeScopeNodes(pageCollection, [topCreatedItem._id.toString(), req.param("srcId")], function(err, treeScopeNodes) {
+		var treeScopeIds = [topCreatedItem._id.toString(), req.param("srcId")];
+		if (req.param("selectedId")) {
+			treeScopeIds.push(req.param("selectedId"));
+		}
+		
+		treeService.feedTreeScopeNodes(pageCollection, treeScopeIds, function(err, treeScopeNodes) {
 			if (err) {
 				return next(err);
 			}
@@ -99,26 +113,33 @@ router.post('/removeNode', function(req, res, next) {
 		if (err) {
 			return next(err);
 		}
-	
+		
+		var treeScopeIds = [];
+		if (req.param("selectedId") && req.param("id")!=req.param("selectedId")) {
+			treeScopeIds.push(req.param("selectedId"));
+		}
 		if (parentId) {
-			var pId = parentId.toString();
-			treeService.feedTreeScopeNodes(pageCollection, [pId], function(err, treeScopeNodes) {
-				if (err) {
-					return next(err);
-				}
-				
-				var result = {
-					treeScopeNodes: treeScopeNodes
-				};
-				res.json(result);
-			});
-		} else {
+			treeScopeIds.push(parentId.toString());
+		}
+	
+		if (treeScopeIds.length==0) {
 			treeService.feedRootNodes(pageCollection, function(err, rootNodes) {
 				if (err)
 					return next(err);
 				
 				var result = {
 					treeScopeNodes: rootNodes
+				};
+				res.json(result);
+			});
+		} else {
+			treeService.feedTreeScopeNodes(pageCollection, treeScopeIds, function(err, treeScopeNodes) {
+				if (err) {
+					return next(err);
+				}
+				
+				var result = {
+					treeScopeNodes: treeScopeNodes
 				};
 				res.json(result);
 			});

@@ -331,12 +331,13 @@ function getTreeNodesByParents(treeCollection, parents, callback) {
 	buildTreeByParents(treeCollection, parents, level, parents, callback);
 }
 
-// сделать поддержку построения tree scope сразу для нескольких узлов
+/**
+ * Build tree scope by nodes array
+ */
 function buildTreeScope(treeCollection, nodes, callback) {
 	var allNodes = [];
 	findAllParentsMapByNodes(treeCollection, nodes, function(err, allParents,
 			allParentsMap) {
-		console.log("allParents: " + allParents);
 		if (err) {
 			return callback(err);
 		}
@@ -411,9 +412,14 @@ function feedChildNodes(treeCollection, nodeId, callback) {
  * information. Fore example request to open any tree node
  */
 function feedTreeScopeNodes(treeCollection, ids, callback) {
+	var idsSet = {};
 	var nodeIds = [];
 	for (var i = 0; i < ids.length; i++) {
-		nodeIds[i] = new ObjectId(ids[i]);
+		var id = ids[i];
+		if (!idsSet[id]) {
+			nodeIds.push(new ObjectId(id));
+			idsSet[id] = true;
+		}
 	}
 	
 	treeCollection.find({
@@ -428,7 +434,7 @@ function feedTreeScopeNodes(treeCollection, ids, callback) {
 		if (!nodes) {
 			return callback(new Error("Failed feed tree scope nodes. Tree nodes not found for ids: " + ids));
 		}
-		if (nodes.length!=ids.length) {
+		if (nodes.length!=nodeIds.length) {
 			return callback(new Error("Failed feed tree scope nodes. Some tree nodes not found for ids: " + ids));
 		}
 		
