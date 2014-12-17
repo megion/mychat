@@ -30,7 +30,7 @@ a {
 	margin-left: -38px;
 	top: 0;
 	padding: 3px;
-	position: absolute;
+	position: fixed;
 	z-index: 1100;
 }
 

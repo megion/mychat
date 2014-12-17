@@ -66,7 +66,6 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 				success : function(data) {
 					treeControl.updateExistUlNodesContainer(treeControl.treeUl,
 							data.treeScopeNodes, true);
-					//treeControl.updateState();
 					
 					megion.showLoadingStatus(false);
 				},
@@ -137,10 +136,8 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 						targetTreeControl.updateExistUlNodesContainer(targetTreeControl.treeUl,
 								data.treeScopeNodes, true);
 						// find new Li by node Id. Before update nodeModel may be null.
-						var nodeModel = targetTreeControl.allNodesMap[data.topCreatedId];
-						var nodeLi = nodeModel.nodeLi
-						targetTreeControl.setAllParentNodeClose(nodeLi, false);
-						targetTreeControl.setNodeClose(nodeLi, false);
+						//var nodeModel = targetTreeControl.allNodesMap[data.topCreatedId];
+						//var nodeLi = nodeModel.nodeLi
 						
 						megion.showLoadingStatus(false);
 					},

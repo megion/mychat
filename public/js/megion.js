@@ -4,14 +4,19 @@ var megion = {};
 /**
  * Показать индикатор запроса к серверу
  */
+megion.loadingCount = 0;
 megion.showLoadingStatus = function(visible) {
 	var statusDiv = document.getElementById('loadingStatus');
 	if (statusDiv) {
 		if (visible) {
 			statusDiv.style.display = "inline";
+			megion.loadingCount++;
 		} else {
+			megion.loadingCount--;
 			setTimeout(function() {
-				statusDiv.style.display = "none";
+				if (megion.loadingCount==0) {
+					statusDiv.style.display = "none";
+				}
 			}, 1000);
 		}
 		
