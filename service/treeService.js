@@ -476,6 +476,14 @@ function feedTreeScopeNodes(treeCollection, ids, callback) {
 	});
 }
 
+function printProcess(asyncCount) {
+	if (asyncCount>0 && asyncCount % 55 == 0) {
+		console.log(".");
+	} else {
+	    process.stdout.write(".");
+	}
+}
+
 /**
  * Copy all children from srcItem to destItem
  * @param srcItem
@@ -484,19 +492,20 @@ function feedTreeScopeNodes(treeCollection, ids, callback) {
  * @param createTreeItems
  * @param callback
  */
-function copyChildren(srcItem, destItem, treeCollection, createCopyItems, processStorage, callback) {
+function copyChildren(srcItem, destItem, treeCollection, createCopyItemsFn, processStorage, callback) {
 	processStorage.asyncCount++;
 	// find all destination child
-	console.log("processStorage.asyncCount: " + processStorage.asyncCount);
+	printProcess(processStorage.asyncCount);
 	findChildrenByParentIds(treeCollection, srcItem._id, function(err, srcChildren) {
 		if (err) {
 			return callback(err);
 		}
 		processStorage.asyncCount--;
-		console.log("processStorage.asyncCount: " + processStorage.asyncCount);
+		printProcess(processStorage.asyncCount);
 		
 		if (srcChildren.length==0) {
 			if (processStorage.asyncCount==0) {
+				console.log(".");
 				console.log("Finish copy. Top created item: " + processStorage.topCreatedItem._id);
 				return callback(null, processStorage.topCreatedItem);
 			}
@@ -505,16 +514,16 @@ function copyChildren(srcItem, destItem, treeCollection, createCopyItems, proces
 		
 		// create copy of srcChildren
 		processStorage.asyncCount++;
-		console.log("processStorage.asyncCount: " + processStorage.asyncCount);
-		createCopyItems(srcChildren, destItem._id, function(err, createdItems) {
+		printProcess(processStorage.asyncCount);
+		createCopyItemsFn(srcChildren, destItem._id, function(err, createdItems) {
 			if (err) {
 				return callback(err);
 			}
 			processStorage.asyncCount--;
-			console.log("processStorage.asyncCount: " + processStorage.asyncCount);
+			printProcess(processStorage.asyncCount);
 			// recursive copy all children of scrChildren
 			for (var i = 0; i < srcChildren.length; i++) {
-				copyChildren(srcChildren[i], createdItems[i], treeCollection, createCopyItems, processStorage, callback);
+				copyChildren(srcChildren[i], createdItems[i], treeCollection, createCopyItemsFn, processStorage, callback);
 			}
 		});
 	});
@@ -522,7 +531,7 @@ function copyChildren(srcItem, destItem, treeCollection, createCopyItems, proces
 
 function removeChildren(item, treeCollection, processStorage, callback) {
 	processStorage.asyncCount++;
-	console.log("remove processStorage.asyncCount: " + processStorage.asyncCount);
+	printProcess(processStorage.asyncCount);
 	// remove item
 	treeCollection.remove({_id: item._id}, function(err, numberRemoved) {
 		if (err) {
@@ -534,10 +543,11 @@ function removeChildren(item, treeCollection, processStorage, callback) {
 				return callback(err);
 			}
 			processStorage.asyncCount--;
-			console.log("remove processStorage.asyncCount: " + processStorage.asyncCount);
+			printProcess(processStorage.asyncCount);
 			
 			if (children.length==0) {
 				if (processStorage.asyncCount==0) {
+					console.log(".");
 					console.log("Finish remove");
 					return callback(null, processStorage.parentId);
 				}
@@ -595,7 +605,7 @@ function isSrcParentDest(srcObjId, destObjId, treeCollection, callback) {
 	});
 }
 
-function copyTo(srcId, destId, treeCollection, createCopyItems, callback) {
+function copyTo(srcId, destId, treeCollection, createCopyItemsFn, callback) {
 	var destObjId = new ObjectId(destId);
 	var srcObjId = new ObjectId(srcId);
 	
@@ -637,12 +647,86 @@ function copyTo(srcId, destId, treeCollection, createCopyItems, callback) {
 					asyncCount: 0
 				};
 				srcItem.order = maxOrder;
-				createCopyItems([srcItem], destObjId, function(err, createdItems) {
+				createCopyItemsFn([srcItem], destObjId, function(err, createdItems) {
 					if (err) {
 						return callback(err);
 					}
 					processStorage.topCreatedItem = createdItems[0];
-					copyChildren(srcItem, createdItems[0], treeCollection, createCopyItems, processStorage, callback);
+					copyChildren(srcItem, createdItems[0], treeCollection, createCopyItemsFn, processStorage, callback);
+				});
+			});
+		});
+	});
+}
+
+function moveTo(srcId, destId, treeCollection, createCopyItemsFn, callback) {
+	var destObjId = new ObjectId(destId);
+	var srcObjId = new ObjectId(srcId);
+	
+	isSrcParentDest(srcObjId, destObjId, treeCollection, function(err, srcIsParentDest){
+		if (err) {
+			return callback(err);
+		}
+		
+		if (srcIsParentDest) {
+			return callback(new Error("Restrictions move source element into its child"));
+		}
+		
+		// find all destination child
+		findChildrenByParentIds(treeCollection, destObjId, function(err, destChildren) {
+			if (err) {
+				return callback(err);
+			}
+			
+			// find max order
+			var maxOrder = 0;
+			for (var i = 0; i < destChildren.length; i++) {
+				var child = destChildren[i];
+				if (maxOrder < child.order) {
+					maxOrder = child.order;
+				}
+			}
+			maxOrder++;
+			
+			// 1. Find destination object
+			treeCollection.findOne({
+				_id : destObjId
+			}, function(err, destItem) {
+				if (err) {
+					return callback(err);
+				}
+				
+				if (!destItem) {
+					return callback(new Error("Failed move to. Destination tree node not found by id: " + destObjId));
+				}
+				
+				treeCollection.findOne({
+					_id : srcObjId
+				}, function(err, srcItem) {
+					if (err) {
+						return callback(err);
+					}
+					
+					if (!srcItem) {
+						return callback(new Error("Failed move to. Source tree node not found by id: " + srcObjId));
+					}
+					
+					var oldSrcItemParentId = srcItem.parentId;
+					
+					// update source item
+					treeCollection.updateOne({
+						_id : srcObjId
+					},
+					{$set: { parentId: destObjId, order: maxOrder }},
+					{upsert:false, w: 1, multi: false},
+					function(err, upResult) {
+						if (err) {
+							return callback(err);
+						}
+						
+						console.log("Finish move source item: " + srcItem._id);
+						return callback(null, oldSrcItemParentId);
+					});
 				});
 			});
 		});
@@ -652,7 +736,7 @@ function copyTo(srcId, destId, treeCollection, createCopyItems, callback) {
 /**
  * Copy source object as neighbor of the destination object. 
  */
-function copyNear(srcId, destId, offsetOrder, treeCollection, createCopyItems, callback) {
+function copyNear(srcId, destId, offsetOrder, treeCollection, createCopyItemsFn, callback) {
 	var destObjId = new ObjectId(destId);
 	var srcObjId = new ObjectId(srcId);
 	
@@ -710,12 +794,12 @@ function copyNear(srcId, destId, offsetOrder, treeCollection, createCopyItems, c
 						asyncCount: 0
 					};
 					srcItem.order = incOrder;
-					createCopyItems([srcItem], parentObjId, function(err, createdItems) {
+					createCopyItemsFn([srcItem], parentObjId, function(err, createdItems) {
 						if (err) {
 							return callback(err);
 						}
 						processStorage.topCreatedItem = createdItems[0];
-						copyChildren(srcItem, createdItems[0], treeCollection, createCopyItems, processStorage, callback);
+						copyChildren(srcItem, createdItems[0], treeCollection, createCopyItemsFn, processStorage, callback);
 					});
 				});
 			});
@@ -723,12 +807,12 @@ function copyNear(srcId, destId, offsetOrder, treeCollection, createCopyItems, c
 	});
 }
 
-function copyOver(srcId, destId, treeCollection, createCopyItems, callback) {
-	copyNear(srcId, destId, 0, treeCollection, createCopyItems, callback);
+function copyOver(srcId, destId, treeCollection, createCopyItemsFn, callback) {
+	copyNear(srcId, destId, 0, treeCollection, createCopyItemsFn, callback);
 }
 
-function copyUnder(srcId, destId, treeCollection, createCopyItems, callback) {
-	copyNear(srcId, destId, 1, treeCollection, createCopyItems, callback);
+function copyUnder(srcId, destId, treeCollection, createCopyItemsFn, callback) {
+	copyNear(srcId, destId, 1, treeCollection, createCopyItemsFn, callback);
 }
 
 function removeNode(id, treeCollection, callback) {
@@ -757,5 +841,6 @@ exports.feedTreeScopeNodes = feedTreeScopeNodes;
 exports.copyTo = copyTo;
 exports.copyOver = copyOver;
 exports.copyUnder = copyUnder;
+exports.moveTo = moveTo;
 exports.removeNode = removeNode;
 
