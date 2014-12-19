@@ -59,7 +59,53 @@ router.post('/copyTo', function(req, res, next) {
 });
 router.post('/moveTo', function(req, res, next) {
 	var pageCollection = pageService.getCollection();
-	treeService.moveTo(req.param("srcId"), req.param("destId"), pageCollection, pageService.createCopyItems, function(err, oldSrcItemParentId) {
+	treeService.moveTo(req.param("srcId"), req.param("destId"), pageCollection, function(err, oldSrcItemParentId) {
+		if (err)
+			return next(err);
+		
+		var treeScopeIds = [req.param("srcId")];
+		if (oldSrcItemParentId) {
+			treeScopeIds.push(oldSrcItemParentId.toString());
+		}
+		if (req.param("selectedId")) {
+			treeScopeIds.push(req.param("selectedId"));
+		}
+		treeService.feedTreeScopeNodes(pageCollection, treeScopeIds, function(err, treeScopeNodes) {
+			if (err)
+				return next(err);
+			var result = {
+				treeScopeNodes: treeScopeNodes
+			};
+			res.json(result);
+		});
+	});
+});
+router.post('/moveOver', function(req, res, next) {
+	var pageCollection = pageService.getCollection();
+	treeService.moveOver(req.param("srcId"), req.param("destId"), pageCollection, function(err, oldSrcItemParentId) {
+		if (err)
+			return next(err);
+		
+		var treeScopeIds = [req.param("srcId")];
+		if (oldSrcItemParentId) {
+			treeScopeIds.push(oldSrcItemParentId.toString());
+		}
+		if (req.param("selectedId")) {
+			treeScopeIds.push(req.param("selectedId"));
+		}
+		treeService.feedTreeScopeNodes(pageCollection, treeScopeIds, function(err, treeScopeNodes) {
+			if (err)
+				return next(err);
+			var result = {
+				treeScopeNodes: treeScopeNodes
+			};
+			res.json(result);
+		});
+	});
+});
+router.post('/moveUnder', function(req, res, next) {
+	var pageCollection = pageService.getCollection();
+	treeService.moveUnder(req.param("srcId"), req.param("destId"), pageCollection, function(err, oldSrcItemParentId) {
 		if (err)
 			return next(err);
 		

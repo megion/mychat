@@ -659,7 +659,7 @@ function copyTo(srcId, destId, treeCollection, createCopyItemsFn, callback) {
 	});
 }
 
-function moveTo(srcId, destId, treeCollection, createCopyItemsFn, callback) {
+function moveTo(srcId, destId, treeCollection, callback) {
 	var destObjId = new ObjectId(destId);
 	var srcObjId = new ObjectId(srcId);
 	
@@ -807,12 +807,98 @@ function copyNear(srcId, destId, offsetOrder, treeCollection, createCopyItemsFn,
 	});
 }
 
+/**
+ * Move source object as neighbor of the destination object. 
+ */
+function moveNear(srcId, destId, offsetOrder, treeCollection, callback) {
+	var destObjId = new ObjectId(destId);
+	var srcObjId = new ObjectId(srcId);
+	
+	isSrcParentDest(srcObjId, destObjId, treeCollection, function(err, srcIsParentDest){
+		if (err) {
+			return callback(err);
+		}
+		
+		if (srcIsParentDest) {
+			return callback(new Error("Restrictions move source element into its child"));
+		}
+		
+		// find dest object
+		treeCollection.findOne({
+			_id : destObjId
+		}, function(err, destItem) {
+			if (err) {
+				return callback(err);
+			}
+			
+			// update sibling dest where order > dest.order
+			var parentObjId;
+			if (destItem.parentId) {
+				parentObjId = new ObjectId(destItem.parentId);
+			} else {
+				parentObjId = null;
+			}
+			
+			// update children where order >= destItem.order
+			var incOrder = destItem.order + offsetOrder;
+			console.log("update children of parent " + parentObjId + " where order >= " + incOrder);
+			treeCollection.update({
+				parentId : parentObjId,
+				order: {$gte: incOrder}
+			},
+			{$inc: { order: 1 }},
+			{multi: true},
+			function(err, upResult) {
+				if (err) {
+					return callback(err);
+				}
+				
+				console.log("upResult.nModified " + upResult.result.nModified);
+				
+				// 1. Find source object
+				treeCollection.findOne({
+					_id : srcObjId
+				}, function(err, srcItem) {
+					if (err) {
+						return callback(err);
+					}
+					
+                    var oldSrcItemParentId = srcItem.parentId;
+					
+					// update source item
+					treeCollection.updateOne({
+						_id : srcObjId
+					},
+					{$set: { parentId: parentObjId, order: incOrder }},
+					{upsert:false, w: 1, multi: false},
+					function(err, upResult) {
+						if (err) {
+							return callback(err);
+						}
+						
+						console.log("Finish move source item: " + srcItem._id);
+						return callback(null, oldSrcItemParentId);
+					});
+				});
+			});
+		});
+	});
+}
+
 function copyOver(srcId, destId, treeCollection, createCopyItemsFn, callback) {
 	copyNear(srcId, destId, 0, treeCollection, createCopyItemsFn, callback);
 }
 
+function moveOver(srcId, destId, treeCollection, callback) {
+	moveNear(srcId, destId, 0, treeCollection, callback);
+}
+
 function copyUnder(srcId, destId, treeCollection, createCopyItemsFn, callback) {
 	copyNear(srcId, destId, 1, treeCollection, createCopyItemsFn, callback);
+}
+
+function moveUnder(srcId, destId, treeCollection, callback) {
+	moveNear(srcId, destId, 1, treeCollection, callback);
 }
 
 function removeNode(id, treeCollection, callback) {
@@ -842,5 +928,7 @@ exports.copyTo = copyTo;
 exports.copyOver = copyOver;
 exports.copyUnder = copyUnder;
 exports.moveTo = moveTo;
+exports.moveOver = moveOver;
+exports.moveUnder = moveUnder;
 exports.removeNode = removeNode;
 
