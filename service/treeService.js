@@ -831,7 +831,6 @@ function moveNear(srcId, destId, offsetOrder, treeCollection, callback) {
 				return callback(err);
 			}
 			
-			// update sibling dest where order > dest.order
 			var parentObjId;
 			if (destItem.parentId) {
 				parentObjId = new ObjectId(destItem.parentId);
