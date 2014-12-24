@@ -162,6 +162,16 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 			onClickCopyMove(e, 'copy', nodeLi);
 			return false;
 		}
+	}, {
+		title : "Change",
+		onclick : function(e) {
+			return false;
+		}
+	}, {
+		title : "Create new",
+		onclick : function(e) {
+			return false;
+		}
 	} ]);
 	containerMenu.appendChild(ulContainer);
 };

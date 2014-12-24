@@ -2,19 +2,25 @@
 <% layout('layout/page') -%>
 <% block('title', 'Hello'); -%>
 
+<script type="text/javascript" src="/js/pagesTree.js"></script>
+
 <div class="menuPanel">
 </div>
 
 <!-- tree -->
 <div id="parentTreePages" style="border: 1px solid gray; border-width: 1px 0 1px 0; overflow: auto;">
     
-    <div style="float: left; width: 50%; border-right: 1px solid gray;">
-    <ul id="treePages" class="filetree treeview"></ul>
+    <div style="float: left; width: 50%; overflow: auto;">
+    	<div style="border-right: 1px solid gray; padding: 20px;">
+    		<ul id="treePages" class="filetree treeview"></ul>
+    	</div>
     </div>
    
-    <div style="float: left; width: 50%; margin-left: -1px;">
-    <ul id="treePages2" class="filetree treeview">
-	</ul>
+    <div style="float: left; width: 50%; overflow: auto;">
+    	<div style="border-left: 1px solid gray; margin-left: -1px; padding: 20px;">
+    		<ul id="treePages2" class="filetree treeview" style="">
+			</ul>
+		</div>
     </div>
 	
 </div>

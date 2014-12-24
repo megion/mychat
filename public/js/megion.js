@@ -36,7 +36,7 @@ megion.createSimpleTextContextMenu = function(menuItems) {
 		itemLi.appendChild(itemA);
 		
 		var itemSpan = document.createElement("span")
-		itemSpan.innerHTML = menuItem.title;
+		itemSpan.appendChild(document.createTextNode(menuItem.title));
 		itemA.appendChild(itemSpan);
 		
 		itemA.onclick = menuItem.onclick;
