@@ -165,6 +165,10 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 	}, {
 		title : "Change",
 		onclick : function(e) {
+			tabaga.stopEventPropagation(e);
+			tabaga.popupMaster.closeContext();
+			
+			tabaga.modalMaster.openModal(new tabaga.ModalCreator("Change page", null));
 			return false;
 		}
 	}, {
