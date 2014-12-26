@@ -168,7 +168,7 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 			tabaga.stopEventPropagation(e);
 			tabaga.popupMaster.closeContext();
 			
-			tabaga.modalMaster.openModal(new tabaga.ModalCreator("Change page", null));
+			tabaga.modalMaster.openModal(new megion.TemplateModalCreator("Change page", {title: "Change page", page: nodeLi.nodeModel}));
 			return false;
 		}
 	}, {
