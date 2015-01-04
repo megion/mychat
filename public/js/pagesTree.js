@@ -26,6 +26,8 @@ function PageNodeContextMenu() {
 	tabaga.PopupMenu.apply(this, arguments);
 }
 
+var createPageModalCreator = new megion.TemplateModalCreator("changePageModal-template");
+
 function onClickCopyMove(e, copyMove, nodeLi) {
 	tabaga.stopEventPropagation(e);
 	tabaga.popupMaster.closeContext();
@@ -168,7 +170,8 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 			tabaga.stopEventPropagation(e);
 			tabaga.popupMaster.closeContext();
 			
-			tabaga.modalMaster.openModal(new megion.TemplateModalCreator("Change page", {title: "Change page", page: nodeLi.nodeModel}));
+			tabaga.modalMaster.openModal(createPageModalCreator,
+					{title: "Change page", page: nodeLi.nodeModel, treeControl: nodeLi.treeControl});
 			return false;
 		}
 	}, {
@@ -250,7 +253,7 @@ PageTreeControl.prototype.loadTreeScopeNodes = function(nodeId, setClosed, updat
 		},
 		error: function (request, status, error) {
 			megion.showLoadingStatus(false);
-			console.error("Error status: " + status + " text: "+ request.responseText)
+			console.error("Error status: " + status + " text: "+ request.responseText);
 	    }
 	});
 };

@@ -8,7 +8,7 @@ function getCollection() {
 	return mongodb.getDb().collection("pages");
 }
 
-function createPage(name, title, parentId, order, callback) {
+function createPageByParams(name, title, parentId, order, callback) {
 	var page = new Page(name, title, parentId, order);
 	var collection = getCollection();
 	collection.insert(page, function(err, results){
@@ -17,6 +17,45 @@ function createPage(name, title, parentId, order, callback) {
 		}
 		callback(null, page);
 	});
+}
+
+function createPage(page, callback) {
+	var collection = getCollection();
+	collection.insert(page, function(err, results){
+		if (err) {
+			return callback(err);
+		}
+		callback(null, page);
+	});
+}
+
+function updatePage(page, callback) {
+	var collection = getCollection();
+	
+	// update source item
+	collection.updateOne({
+		_id : page._id
+	},
+	{$set: { name: page.name, title: page.title }},
+	{upsert:false, w: 1, multi: false},
+	function(err, upResult) {
+		if (err) {
+			return callback(err);
+		}
+		
+		console.log("Update item: " + page._id);
+		return callback(null, page);
+	});
+}
+
+function resolvePageByParams(req) {
+	var page = new Page(req.param("name"), req.param("title"), null, null);
+	
+	if (req.param("id")) {
+		page._id = new ObjectId(req.param("id"));
+	}
+	
+	return page;
 }
 
 /**
@@ -42,6 +81,9 @@ function createCopyItems(srcItems, parentId, callback) {
 	});
 }
 
+exports.createPageByParams = createPageByParams;
 exports.createPage = createPage;
+exports.updatePage = updatePage;
+exports.resolvePageByParams = resolvePageByParams;
 exports.createCopyItems = createCopyItems;
 exports.getCollection = getCollection;

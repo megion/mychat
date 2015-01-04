@@ -605,6 +605,39 @@ function isSrcParentDest(srcObjId, destObjId, treeCollection, callback) {
 	});
 }
 
+function createTo(item, destId, treeCollection, createItemFn, callback) {
+	var destObjId = null;
+	if (destId) {
+		destObjId = new ObjectId(destParentId);
+	}
+	
+	// find sibling nodes 
+	findChildrenByParentIds(treeCollection, destObjId, function(err, destChildren) {
+		if (err) {
+			return callback(err);
+		}
+		
+		// find max order
+		var maxOrder = 0;
+		for (var i = 0; i < destChildren.length; i++) {
+			var child = destChildren[i];
+			if (maxOrder < child.order) {
+				maxOrder = child.order;
+			}
+		}
+		maxOrder++;	
+		item.order = maxOrder;
+		item.parentId = destObjId;
+		
+		createItemFn(item, function(err, newItem) {
+			if (err) {
+				return callback(err);
+			}
+			return callback(null, newItem);
+		});
+	});
+}
+
 function copyTo(srcId, destId, treeCollection, createCopyItemsFn, callback) {
 	var destObjId = new ObjectId(destId);
 	var srcObjId = new ObjectId(srcId);

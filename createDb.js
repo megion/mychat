@@ -51,7 +51,7 @@ function createChildrenPage(parent, level, position, callback) {
 	var name = parent ? (parent.name + "_" + position) : ("name_" + position);
 	var title = parent ? (parent.title + "_" + position)
 			: ("title_" + position);
-	pageService.createPage(name, title, parent ? parent._id : null, position, function(
+	pageService.createPageByParams(name, title, parent ? parent._id : null, position, function(
 			err, childPage) {
 		if (err) {
 			console.error("childPage not created: " + name);

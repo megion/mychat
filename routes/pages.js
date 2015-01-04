@@ -2,6 +2,7 @@ var router = require('express').Router();
 var HttpError = require('error').HttpError;
 var ObjectID = require('mongodb').ObjectID;
 var log = require('lib/log')(module);
+var Page = require('models/page').Page;
 
 var pageService = require('service/pageService');
 var treeService = require('service/treeService');
@@ -51,6 +52,34 @@ router.post('/copyTo', function(req, res, next) {
 				return next(err);
 			var result = {
 				topCreatedId: topCreatedItem._id.toString(),
+				treeScopeNodes: treeScopeNodes
+			};
+			res.json(result);
+		});
+	});
+});
+router.post('/createTo', function(req, res, next) {
+	var pageCollection = pageService.getCollection();
+	var title = req.param("title");
+	
+	var page = pageService.resolvePageFromParams(req.param);
+	
+	treeService.createTo(page, req.param("destId"), pageCollection, pageService.createPage, function(err, newItem) {
+		if (err)
+			return next(err);
+		
+		var treeScopeIds = [];
+		if (req.param("selectedId")) {
+			treeScopeIds.push(req.param("selectedId"));
+		}
+		if (req.param("destId")) {
+			treeScopeIds.push(req.param("destId"));
+		}
+		treeService.feedTreeScopeNodes(pageCollection, treeScopeIds, function(err, treeScopeNodes) {
+			if (err)
+				return next(err);
+			var result = {
+				//topCreatedId: topCreatedItem._id.toString(),
 				treeScopeNodes: treeScopeNodes
 			};
 			res.json(result);
@@ -214,6 +243,31 @@ router.post('/removeNode', function(req, res, next) {
 			});
 		}
 		
+	});
+});
+
+router.post('/updateNode', function(req, res, next) {
+	var pageCollection = pageService.getCollection();
+	
+	var page = pageService.resolvePageByParams(req);
+	
+	pageService.updatePage(page, function(err, upItem) {
+		if (err)
+			return next(err);
+		
+		var treeScopeIds = [page._id.toString()];
+		if (req.param("selectedId")) {
+			treeScopeIds.push(req.param("selectedId"));
+		}
+		
+		treeService.feedTreeScopeNodes(pageCollection, treeScopeIds, function(err, treeScopeNodes) {
+			if (err)
+				return next(err);
+			var result = {
+				treeScopeNodes: treeScopeNodes
+			};
+			res.json(result);
+		});
 	});
 });
 

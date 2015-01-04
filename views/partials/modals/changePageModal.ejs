@@ -1,14 +1,91 @@
 <script type="text/template" id="changePageModal-template">
-<a class="modalWindow-header-close"></a>
-<div class="modalWindow-header"><% title %></div>
+<a class="modalWindow-header-close" onclick="tabaga.modalMaster.closeModal();"></a>
+<div class="modalWindow-header">{{ title }}</div>
 <div class="modalWindow-body">
-	<form id="changePageModal-window">
-		title <input name="title" value="<% page.title %>" />
+    <div class="modalWindow-body-content">
+	<form>
+        <input name="id" value="{{ page.id }}" type="hidden" />
+        <table>
+            <tbody>
+                <tr>
+                    <td>Name</td>
+                    <td><input name="name" value="{{ page.name }}" /></td>
+                </tr>
+                <tr>
+                    <td>Title</td>
+                    <td><input name="title" value="{{ page.title }}" /></td>
+                </tr>
+            </tbody>
+        </table>
 	</form>
+    </div>
 </div>
 <div class="modalWindow-footer">
-	<button onclick="tabaga.modalMaster.closeModal(e)">Cancel</button>
-	<button
-		onclick="console.log('s: ' + $('#changePageModal-window').serialize())">Ok</button>
+	<button style="float: right;"
+		onclick="savePage(this);">Ok</button>
+    <button style="float: right;" onclick="tabaga.modalMaster.closeModal();">Cancel</button>
 </div>
+</script>
+
+<script type="text/javascript">
+	function savePage(bt) {
+		function validate(form) {
+			var elems = form.elements;
+			var ok = true;
+
+			megion.resetError(elems.title.parentNode);
+			if (!elems.title.value) {
+				megion.showError(elems.title.parentNode, ' Input title please');
+				ok = false;
+			}
+			
+			megion.resetError(elems.name.parentNode);
+			if (!elems.name.value) {
+				megion.showError(elems.name.parentNode, ' Input name please');
+				ok = false;
+			}
+			
+			return  ok;
+		}
+		
+		var frm = $(bt).parent().parent().find("form");
+		var modalWindow = $(bt).parent().parent();
+		var context = modalWindow[0].context;
+		var ok = validate(frm[0]);
+		if (ok) {
+			var sendData = frm.serialize();
+			var treeControl = context.treeControl;
+			if (treeControl.currentSelectedNodeLi) {
+			    sendData += "&selectedId=" + treeControl.currentSelectedNodeLi.nodeModel.id;
+			}
+			
+			console.log('sendData: ' + sendData);
+			megion.showLoadingStatus(true);
+			$.ajax({
+				url : "pages/updateNode",
+				type: "POST",
+				dataType : "json",
+				data : sendData,
+				success : function(data) {
+					treeControl.updateExistUlNodesContainer(treeControl.treeUl,
+							data.treeScopeNodes, true);
+					
+					megion.showLoadingStatus(false);
+				},
+				error: function (request, status, error) {
+					megion.showLoadingStatus(false);
+					console.error("Error status: " + status + " text: "+ request.responseText)
+			    }
+			});
+			
+			tabaga.modalMaster.closeModal();
+
+			/*tabaga.modalMaster.openModal(createPageModalCreator, {
+				title : 'Change page2',
+				page : {
+					title : 'test'
+				}
+			});*/
+		}
+	}
 </script>

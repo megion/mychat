@@ -19,7 +19,7 @@ a {
 
 .loadingStatusLabel {
 	background-color: #ffffc8;
-	border-color: #ffffc8;
+	border-color: #d6d6d6;
 	border-radius: 0 0 4px 4px;
 	border-style: none solid solid solid;
 	border-width: 0 2px 2px 2px;
@@ -165,4 +165,8 @@ body.stretchHeight {
 
 .cm-opened {
 	background: none repeat scroll 0 0 rgba(255, 193, 0, 0.37);
+}
+
+.error-message {
+	color: red;
 }
