@@ -608,7 +608,7 @@ function isSrcParentDest(srcObjId, destObjId, treeCollection, callback) {
 function createTo(item, destId, treeCollection, createItemFn, callback) {
 	var destObjId = null;
 	if (destId) {
-		destObjId = new ObjectId(destParentId);
+		destObjId = new ObjectId(destId);
 	}
 	
 	// find sibling nodes 
@@ -963,4 +963,5 @@ exports.moveTo = moveTo;
 exports.moveOver = moveOver;
 exports.moveUnder = moveUnder;
 exports.removeNode = removeNode;
+exports.createTo = createTo;
 

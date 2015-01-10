@@ -22,13 +22,13 @@
 </div>
 <div class="modalWindow-footer">
 	<button style="float: right;"
-		onclick="savePage(this);">Ok</button>
+		onclick="savePage(this, {{create}});">Ok</button>
     <button style="float: right;" onclick="tabaga.modalMaster.closeModal();">Cancel</button>
 </div>
 </script>
 
 <script type="text/javascript">
-	function savePage(bt) {
+	function savePage(bt, create) {
 		function validate(form) {
 			var elems = form.elements;
 			var ok = true;
@@ -55,21 +55,29 @@
 		if (ok) {
 			var sendData = frm.serialize();
 			var treeControl = context.treeControl;
-			if (treeControl.currentSelectedNodeLi) {
-			    sendData += "&selectedId=" + treeControl.currentSelectedNodeLi.nodeModel.id;
+			if (treeControl.currentSelectedNodeEl) {
+			    sendData += "&selectedId=" + treeControl.currentSelectedNodeEl.nodeModel.id;
+			}
+			
+			if (create && context.parentId) {
+				sendData += "&parentId=" + context.parentId;
+			}
+			var url;
+			if (create) {
+				url = "pages/createNode";
+			} else {
+				url = "pages/updateNode";
 			}
 			
 			console.log('sendData: ' + sendData);
 			megion.showLoadingStatus(true);
 			$.ajax({
-				url : "pages/updateNode",
+				url: url,
 				type: "POST",
-				dataType : "json",
-				data : sendData,
-				success : function(data) {
-					treeControl.updateExistUlNodesContainer(treeControl.treeUl,
-							data.treeScopeNodes, true);
-					
+				dataType: "json",
+				data: sendData,
+				success: function(data) {
+					treeControl.updateRootNodes(data.treeScopeNodes, true);
 					megion.showLoadingStatus(false);
 				},
 				error: function (request, status, error) {

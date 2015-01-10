@@ -1,5 +1,6 @@
 var pagetree = {
-	TREE_NODE_CONTEXT_OPENED: 'cm-opened'	
+	TREE_NODE_CONTEXT_OPENED: 'cm-opened',
+	TREE_CONTEXT_OPENED: 'cm-tree-opened'
 };
 
 function PageDropTarget(element) {
@@ -17,15 +18,6 @@ PageDropTarget.prototype.accept = function(dragObject) {
 	tabaga.DropTarget.prototype.accept.apply(this, arguments);
 };
 
-// переопределить TreeControl
-function PageTreeControl() {
-	tabaga.TreeControl.apply(this, arguments);
-}
-// переопределим tabaga.PopupMenu
-function PageNodeContextMenu() {
-	tabaga.PopupMenu.apply(this, arguments);
-}
-
 var createPageModalCreator = new megion.TemplateModalCreator("changePageModal-template");
 
 function onClickCopyMove(e, copyMove, nodeLi) {
@@ -34,8 +26,6 @@ function onClickCopyMove(e, copyMove, nodeLi) {
 	
 	var dragObject = new tabaga.DragObject(nodeLi.nodeSpan);
 	dragObject.nodeLi = nodeLi;
-	//dragObject.setScrollManager(new tabaga.DragScrollManager(
-	//jQuery("#parentTreePages")[0]));
 	
 	var onDragSuccessFn = dragObject.onDragSuccess;
 	dragObject.onDragSuccess = function(dropTarget) {
@@ -71,8 +61,8 @@ function onClickCopyMove(e, copyMove, nodeLi) {
 			"srcId" : srcId,
 			"destId" : destId
 		};
-	    if (targetTreeControl.currentSelectedNodeLi) {
-	    	sendData.selectedId = targetTreeControl.currentSelectedNodeLi.nodeModel.id;
+	    if (targetTreeControl.currentSelectedNodeEl) {
+	    	sendData.selectedId = targetTreeControl.currentSelectedNodeEl.nodeModel.id;
 	    }
 		$.ajax({
 			url : actionUrl,
@@ -80,8 +70,7 @@ function onClickCopyMove(e, copyMove, nodeLi) {
 			dataType : "json",
 			data : sendData,
 			success : function(data) {
-				targetTreeControl.updateExistUlNodesContainer(targetTreeControl.treeUl,
-						data.treeScopeNodes, true);
+				targetTreeControl.updateRootNodes(data.treeScopeNodes, true);
 				megion.showLoadingStatus(false);
 			},
 			error: function (request, status, error) {
@@ -101,6 +90,11 @@ function onClickCopyMove(e, copyMove, nodeLi) {
 	tabaga.dragMaster.emulateDragStart(nodeLi.nodeSpan, {x: 0, y: -15});
 	window.disableClickOnTreeNode = true;
 	return false;
+}
+
+//переопределим tabaga.PopupMenu
+function PageNodeContextMenu() {
+	tabaga.PopupMenu.apply(this, arguments);
 }
 
 PageNodeContextMenu.prototype = Object.create(tabaga.PopupMenu.prototype);
@@ -132,8 +126,8 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 			var sendData = {
 				"id" : nodeLi.nodeModel.id
 			};
-			if (treeControl.currentSelectedNodeLi) {
-			    sendData.selectedId = treeControl.currentSelectedNodeLi.nodeModel.id;
+			if (treeControl.currentSelectedNodeEl) {
+			    sendData.selectedId = treeControl.currentSelectedNodeEl.nodeModel.id;
 			}
 			$.ajax({
 				url : "pages/removeNode",
@@ -141,9 +135,7 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 				dataType : "json",
 				data : sendData,
 				success : function(data) {
-					treeControl.updateExistUlNodesContainer(treeControl.treeUl,
-							data.treeScopeNodes, true);
-					
+					treeControl.updateRootNodes(data.treeScopeNodes, true);
 					megion.showLoadingStatus(false);
 				},
 				error: function (request, status, error) {
@@ -171,89 +163,48 @@ PageNodeContextMenu.prototype.onCreate = function(containerMenu) {
 			tabaga.popupMaster.closeContext();
 			
 			tabaga.modalMaster.openModal(createPageModalCreator,
-					{title: "Change page", page: nodeLi.nodeModel, treeControl: nodeLi.treeControl});
+					{title: "Change page", page: nodeLi.nodeModel, treeControl: nodeLi.treeControl, create: false});
 			return false;
 		}
 	}, {
 		title : "Create new",
 		onclick : function(e) {
+			tabaga.stopEventPropagation(e);
+			tabaga.popupMaster.closeContext();
+			
+			tabaga.modalMaster.openModal(createPageModalCreator,
+					{title: "Create new page", page: {}, treeControl: nodeLi.treeControl, parentId: nodeLi.nodeModel.id, create: true});
 			return false;
 		}
 	} ]);
 	containerMenu.appendChild(ulContainer);
 };
 
-PageTreeControl.prototype = Object.create(tabaga.TreeControl.prototype);
+//переопределим tabaga.PopupMenu
+function PageTreeContextMenu() {
+	tabaga.PopupMenu.apply(this, arguments);
+}
 
-PageTreeControl.prototype.appendNewNode = function(parentUl, newNode) {
-	var newNodeLi = tabaga.TreeControl.prototype.appendNewNode.apply(this,
-			arguments);
-	//newNodeLi.nodeSpan.innerHTML = newNodeLi.nodeSpan.innerHTML + " order "+ newNodeLi.nodeModel.order;
-
-	tabaga.popupMaster.makeContextable(newNodeLi);
-	var menu = new PageNodeContextMenu(newNodeLi/*, jQuery("#parentTreePages")[0]*/);
-
-	newNodeLi.onclick = function(event) {
-		tabaga.stopEventPropagation(event);
-		if (window.disableClickOnTreeNode) {
-			window.disableClickOnTreeNode = false;
-			return false;
-		} else {
-		    // call default onclick
-		    return tabaga.TreeControl.onClickTreeNode.apply(this, arguments);
-		}
-	}
-
-	var dropTarget = new PageDropTarget(newNodeLi.nodeSpan);
-	dropTarget.nodeLi = newNodeLi;
-	return newNodeLi;
-	//tabaga.dragMaster.makeDraggable(newNodeLi.nodeSpan);
-};
-
-PageTreeControl.prototype.loadChildNodes = function(nodeLi) {
-	megion.showLoadingStatus(true);
-	var self = this;
-	var nodeId = nodeLi.nodeModel.id;
-	$.ajax({
-		url : "pages/page",
-		dataType : "json",
-		data : {
-			"nodeId" : nodeId
-		},
-		success : function(loadedData) {
-			// loaded data is array
-			self.updateExistNode(nodeLi, loadedData[0], false);
-			megion.showLoadingStatus(false);
-		},
-		error: function (request, status, error) {
-			megion.showLoadingStatus(false);
-			console.error("Error status: " + status + " text: "+ request.responseText)
-	    }
-	});
-};
-
-PageTreeControl.prototype.loadTreeScopeNodes = function(nodeId, setClosed, updateCloseState) {
-	megion.showLoadingStatus(true);
-	var self = this;
-	$.ajax({
-		url : "pages/pageTreeScope",
-		dataType : "json",
-		data : {
-			"nodeId" : nodeId
-		},
-		success : function(loadedData) {
-			self.updateExistUlNodesContainer(self.treeUl,
-					loadedData, updateCloseState);
-			// find Li by node Id. Before update nodeModel may be null.
-			var nodeModel = self.allNodesMap[nodeId];
-			var nodeLi = nodeModel.nodeLi
+PageTreeContextMenu.prototype = Object.create(tabaga.PopupMenu.prototype);
+PageTreeContextMenu.prototype.onRemove = function(containerMenu) {
+	var treeUl = this.element;
+	tabaga.removeClass(treeUl, pagetree.TREE_CONTEXT_OPENED);
+}
+PageTreeContextMenu.prototype.onCreate = function(containerMenu) {
+	var treeUl = this.element;
+	tabaga.addClass(treeUl, pagetree.TREE_CONTEXT_OPENED);
+	
+	var ulContainer = megion.createSimpleTextContextMenu([ {
+		title : "Create new root",
+		onclick : function(e) {
+			tabaga.stopEventPropagation(e);
+			tabaga.popupMaster.closeContext();
 			
-			self.openNode(nodeLi, setClosed);
-			megion.showLoadingStatus(false);
-		},
-		error: function (request, status, error) {
-			megion.showLoadingStatus(false);
-			console.error("Error status: " + status + " text: "+ request.responseText);
-	    }
-	});
-};
+			tabaga.modalMaster.openModal(createPageModalCreator,
+					{title: "Create new root page", page: {}, treeControl: treeUl.treeControl, create: true});
+			return false;
+		}
+	} ]);
+	containerMenu.appendChild(ulContainer);
+}
+

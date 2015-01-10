@@ -4,27 +4,28 @@
 
 <%-partial('./partials/modals/changePageModal')%>
 
+<script type="text/javascript" src="/js/PageTreeControl.js"></script>
 <script type="text/javascript" src="/js/pagesTree.js"></script>
+<link rel='stylesheet' href='/css/twoSidesLayout.css' />
 
 <div class="menuPanel">
 </div>
 
 <!-- tree -->
-<div id="parentTreePages" style="border: 1px solid gray; border-width: 1px 0 1px 0; overflow: auto;">
-    
-    <div style="float: left; width: 50%; overflow: auto;">
-    	<div style="border-right: 1px solid gray; padding: 20px;">
-    		<ul id="treePages" class="filetree treeview"></ul>
-    	</div>
+
+<div class="main-column">
+    <div class="center-column">
+        <div class="treeBox-container">
+            <div class="treeBox">
+                <div class="leftTree">
+                    <ul id="treePages" class="filetree treeview" style="padding: 20px 0 0 10px;"></ul>
+                </div>    
+                <div class="rightTree">
+                    <ul id="treePages2" class="filetree treeview" style="padding: 20px 0 0 10px;"></ul>
+                </div>
+            </div>
+        </div>
     </div>
-   
-    <div style="float: left; width: 50%; overflow: auto;">
-    	<div style="border-left: 1px solid gray; margin-left: -1px; padding: 20px;">
-    		<ul id="treePages2" class="filetree treeview" style="">
-			</ul>
-		</div>
-    </div>
-	
 </div>
 
 <script type="text/javascript">

@@ -271,4 +271,34 @@ router.post('/updateNode', function(req, res, next) {
 	});
 });
 
+router.post('/createNode', function(req, res, next) {
+	var pageCollection = pageService.getCollection();
+	
+	var page = pageService.resolvePageByParams(req);
+	
+	treeService.createTo(page, req.param("parentId"), pageCollection, pageService.createPage, function(err, newPage) {
+		if (err)
+			return next(err);
+		
+		var treeScopeIds = [];
+		if (req.param("selectedId")) {
+			treeScopeIds.push(req.param("selectedId"));
+		}
+		if (req.param("parentId")) {
+			treeScopeIds.push(req.param("parentId"));
+		} else {
+			treeScopeIds.push(newPage._id.toString());
+		}
+		
+		treeService.feedTreeScopeNodes(pageCollection, treeScopeIds, function(err, treeScopeNodes) {
+			if (err)
+				return next(err);
+			var result = {
+				treeScopeNodes: treeScopeNodes
+			};
+			res.json(result);
+		});
+	});
+});
+
 module.exports = router;

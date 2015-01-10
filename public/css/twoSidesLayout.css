@@ -1,0 +1,63 @@
+body {
+    height: 100%;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+}
+
+.main-column {
+	height: 60%;
+    position: relative;
+    top: 0;
+    padding: 3px;
+}
+
+.center-column {
+	bottom: 1ex;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+}
+
+.treeBox-container {
+	height: 100%;
+    position: relative;
+}
+
+.treeBox {
+	border-bottom: 1px solid #bbb;
+    border-left: 1px solid #bbb;
+    border-right: 1px solid #bbb;
+    bottom: 0;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+}
+
+.leftTree {
+	border-right: 1px solid #ccc;
+    bottom: 0;
+    height: 100%;
+    left: 0;
+    overflow: auto;
+    padding: 0;
+    position: absolute;
+    top: 0;
+    width: 50%;
+}
+
+.rightTree {
+	border-left: 1px solid #ccc;
+    bottom: 0;
+    height: 100%;
+    left: 50%;
+    margin: 0 0 0 -1px;
+    overflow: auto;
+    padding: 0;
+    position: absolute;
+    top: 0;
+    width: 50%;
+}
