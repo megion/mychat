@@ -22,6 +22,14 @@
                 </div>    
                 <div class="rightTree">
                     <ul id="treePages2" class="filetree treeview" style="padding: 20px 0 0 10px;"></ul>
+                    
+                    <table id="treePages3" class="filetree treeview" style="padding: 20px 0 0 10px;">
+                        <thead>
+                            <tr>
+                                <th>Name</th> 
+                            </tr>
+                        </thead>
+                    </table>
                 </div>
             </div>
         </div>
@@ -31,13 +39,17 @@
 <script type="text/javascript">
 	var treeObj =<%-JSON.stringify(treeJson)%>;
 	var treeObj2 =<%-JSON.stringify(treeJson)%>;
+	var treeObj3 =<%-JSON.stringify(treeJson)%>;
 	
 	var config = {
-			TreeControlConstructor: PageTreeControl
-		}
+		TreeControlConstructor: PageTreeControl
+	};
+	
+	var treetableConfig = {};
 	
 	jQuery("#treePages").createTreeControl("1", config, treeObj);
 	var tree2 = jQuery("#treePages2").createTreeControl("2", config, treeObj2);
+	jQuery("#treePages3").createTreetableControl("3", treetableConfig, treeObj3);
 	//tabaga.enableHistoryControl(tree2, false);
 	
 </script>
