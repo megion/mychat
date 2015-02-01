@@ -1,11 +1,11 @@
-// переопределить TreeControl
-function PageTreeControl() {
-	tabaga.TreeControl.apply(this, arguments);
+// переопределить TreetableControl
+function PageTreetableControl() {
+	tabaga.TreetableControl.apply(this, arguments);
 }
 
-PageTreeControl.prototype = Object.create(tabaga.TreeControl.prototype);
+PageTreetableControl.prototype = Object.create(tabaga.TreetableControl.prototype);
 
-PageTreeControl.prototype.appendNewNode = function(parentUl, newNode) {
+/*PageTreeControl.prototype.appendNewNode = function(parentUl, newNode) {
 	var newNodeLi = tabaga.TreeControl.prototype.appendNewNode.apply(this,
 			arguments);
 
@@ -34,9 +34,9 @@ PageTreeControl.prototype.init = function(rootNodes) {
 	
 	tabaga.popupMaster.makeContextable(this.treeEl);
 	var menu = new PageTreeContextMenu(this.treeEl);
-};
+};*/
 
-PageTreeControl.prototype.loadChildNodes = function(nodeEl) {
+PageTreetableControl.prototype.loadChildNodes = function(nodeEl) {
 	megion.showLoadingStatus(true);
 	var self = this;
 	var nodeId = nodeEl.nodeModel.id;
@@ -58,7 +58,7 @@ PageTreeControl.prototype.loadChildNodes = function(nodeEl) {
 	});
 };
 
-PageTreeControl.prototype.loadTreeScopeNodes = function(nodeId, setClosed, updateCloseState) {
+PageTreetableControl.prototype.loadTreeScopeNodes = function(nodeId, setClosed, updateCloseState) {
 	megion.showLoadingStatus(true);
 	var self = this;
 	$.ajax({
@@ -69,11 +69,11 @@ PageTreeControl.prototype.loadTreeScopeNodes = function(nodeId, setClosed, updat
 		},
 		success : function(loadedData) {
 			self.updateRootNodes(loadedData, updateCloseState);
-			// find Li by node Id. Before update nodeModel may be null.
+			// find nodeEl by node Id. Before update nodeModel may be null.
 			var nodeModel = self.allNodesMap[nodeId];
-			var nodeLi = nodeModel.nodeEl
+			var nodeEl = nodeModel.nodeEl
 			
-			self.openNode(nodeLi, setClosed);
+			self.openNode(nodeEl, setClosed);
 			megion.showLoadingStatus(false);
 		},
 		error: function (request, status, error) {
