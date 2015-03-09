@@ -1,0 +1,9 @@
+
+<% layout('../layout/ngLayout1') -%>
+<% block('title', 'test1'); -%>
+<div data-ng-app>
+	<label>Name:</label> <input type="text" data-ng-model="yourName"
+		placeholder="Enter a name here">
+	<hr>
+	<h1>Hello {{yourName}}!</h1>
+</div>

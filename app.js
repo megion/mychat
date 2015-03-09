@@ -73,6 +73,7 @@ function initWebApp(app) {
 	var frontpage = require('./routes/frontpage');
 	var login = require('./routes/login');
 	var logout = require('./routes/logout');
+	var ngtest = require('./routes/ngtest');
 	
 	//app.use('/', routes);
 	app.use('/', frontpage);
@@ -81,6 +82,7 @@ function initWebApp(app) {
 	app.use('/logout', logout);
 	app.use('/users', users);
 	app.use('/pages', pages);
+	app.use('/ngtest', ngtest);
 
 	//app.use(function(req, res, next) {
 		//req.session.numberOfVisits = req.session.numberOfVisits + 1 || 1;

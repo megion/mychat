@@ -31,4 +31,6 @@ local_package.csx
 .classpath
 .settings
 
+public/vendor
+
 
